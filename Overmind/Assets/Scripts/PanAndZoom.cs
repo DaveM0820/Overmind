@@ -28,7 +28,7 @@ public class PanAndZoom : MonoBehaviour
     private void Start()
     {
         PanSpeed = 4f;
-        ZoomSpeed = 0.8f; //approximate distance movable in one arm length 
+        ZoomSpeed = 0.01f; //approximate distance movable in one arm length 
         MaxZoom = 500; //max camera height in m
         MinZoom = 5; //min camera height in m
 
@@ -78,8 +78,7 @@ public class PanAndZoom : MonoBehaviour
                 NewZ = InitPlayerPosition.z + (transform.position.y * Distancecontrollermoved.y * PanSpeed);// 
             }
 
-            transform.position = new Vector3(NewX, transform.position.y, NewZ);
-            Debug.Log("NewX: " + NewX + "   NeyZ" + NewZ);
+            //transform.position = new Vector3(NewX, transform.position.y, NewZ);
         }
         else //if grip is not being pressed
         {

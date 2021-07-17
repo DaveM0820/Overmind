@@ -16,7 +16,6 @@ public class UnitMovementCommand : MonoBehaviour
 
     void start()
     {
-        Debug.Log("UnitMovementCommand script start()");
 
         orderIssued = false;
         selectedUnits = Select.SelectedUnits;
@@ -27,36 +26,28 @@ public class UnitMovementCommand : MonoBehaviour
 
     void Update()
     {
-        Debug.Log("UnitMovementCommand script Update()");
 
         buttonValue = triggerActionRefrence.action.ReadValue<float>();
-        Debug.Log("TriggerButtonvlaue:" + buttonValue );
        // Debug.Log("selectedUnits.Count " + selectedUnits.Count);
 
-        if (buttonValue == 1)
+        if (buttonValue == 1)//if trigger is pressed
         {
-            selectedUnits = Select.SelectedUnits;
+            selectedUnits = Select.SelectedUnits;//get list of selected units
 
             if (selectedUnits != null) { 
-                Debug.Log("TriggerButtonvlaue if loop" + buttonValue);
-                Debug.Log("selectedUnits.Count" + selectedUnits.Count);
-
                  if (selectedUnits.Count > 0)
                  {
-                         orderIssued = true;
-                         Debug.Log("OrderIssued = " + orderIssued);
+                         orderIssued = true; //if there are units selected set orderIssued to true
                  }
             }else
             {
 
-                Debug.Log("selectedUnits.Count is null");
 
             }
         } else
         {
-            if (orderIssued == true)
+            if (orderIssued == true) //if the button isn't being pressed check if orderIssued is true and if so run DetermineOrderType() and set order Issued to false
             {
-                Debug.Log("DetermineOrderType() started ");
 
                 DetermineOrderType();
 
@@ -67,19 +58,17 @@ public class UnitMovementCommand : MonoBehaviour
     }
     private void DetermineOrderType()
     {
-        //if cursor is on gound give move order 
-        Debug.Log("DetermineOrderType() running ");
+        //if cursor is on gound then give move order 
         selectedUnits = Select.SelectedUnits;
-
         rightArmPosition = GameObject.FindWithTag("RightController");
         Physics.Raycast(rightArmPosition.transform.position, rightArmPosition.transform.TransformDirection(Vector3.forward), out rightRaycastHit, Mathf.Infinity);
         Debug.Log("MoveOrderTarget hit detection: " + rightRaycastHit.collider.gameObject.name);
-        if (rightRaycastHit.collider.gameObject.name == "Ground") // if player issued order on on ground, move units to point
+        if (rightRaycastHit.collider.gameObject.name == "Ground") // if player issued order on on ground, move units to that point
         {
             Debug.Log("GiveMoveOrder() to ground at point: " + rightRaycastHit.point);
             GiveMoveOrder(rightRaycastHit.point);
         } 
-        //if unit(s) are all builders check what target is hitting, if it is a resource consume, if building assist
+        //check if all unit(s) are all builders, if so check what target is hitting and if it is a resource consume, if it is a building assist
         bool allBuilder = true;
         int counter = 0;
         while (counter < selectedUnits.Count)
@@ -125,14 +114,13 @@ public class UnitMovementCommand : MonoBehaviour
 
 
     }
-    private void GiveMoveOrder(Vector3 location)
+    private void GiveMoveOrder(Vector3 location) //what to do when a move order is given
     {
         GameObject moveOrderIndicator = Instantiate(GameObject.Find("/MoveOrderIndicator"));
         //moveOrderIndicator.SetActive(true);
         moveOrderIndicator.transform.position = location;
         Destroy(moveOrderIndicator, 4);
-        Debug.Log("withing GiveMoveOrder(), location: " + location);
-        List<Vector3> targetPositionList = GetPositionListAroundPoint(location, new float[] { 2f, 4f, 8f }, new int[] { 4, 8, 12 }); //give units individual points around move order location
+        List<Vector3> targetPositionList = GetPositionListAroundPoint(location, new float[] { 2f, 3f, 4.5f, 6f, 8f, 10f}, new int[] { 4, 8, 10, 15, 20, 25}); //give units individual points around move order location
         int counter = 0;
         while (counter < selectedUnits.Count)
         {

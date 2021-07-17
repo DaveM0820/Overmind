@@ -10,6 +10,7 @@ public class UnitBehaviour : MonoBehaviour
     [SerializeField] private int healthPointsMax;
     private int currenthealthpoints;
     public string unitType;
+    public float unitSize;
 
 
     // private GameObject selectionMarker;

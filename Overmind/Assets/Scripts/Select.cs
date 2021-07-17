@@ -8,22 +8,24 @@ public class Select : MonoBehaviour
     public InputActionReference SelectActionRefrence = null;
     private float ButtonValue;
 
-    private bool DrawingSelectionBox;
-    private Vector3 StartSelectionBox;
+    private bool DrawingSelectionBox;//is the selection box being drawn
+    private Vector3 StartSelectionBox;//location to start drawing selectoin box
 
-    private RaycastHit RightRaycastHit;
+    private RaycastHit RightRaycastHit;//hit point of right controller raycast
     private RaycastHit LeftRaycastHit;
 
     private Transform RightArmPosition;
     private Transform LeftArmPosition;
 
-    private GameObject RightCursor;
+    private GameObject RightCursor; // the cursors that appear on the ground
     private GameObject LeftCursor;
-    private GameObject SelectionBox = null;
+    private GameObject SelectionBox = null; //the selection box itself
 
-    private GameObject buildingScreen;
+    private GameObject buildingScreen; //the left hand nav screens
     private GameObject unitScreen;
     private GameObject builderUnitScreen;
+
+    private GameObject rightArm;
 
     public static List<GameObject> SelectedUnits = null;
 
@@ -35,7 +37,9 @@ public class Select : MonoBehaviour
         LeftCursor = Instantiate(RightCursor);
         RightArmPosition = GameObject.FindWithTag("RightController").transform;
         LeftArmPosition = GameObject.FindWithTag("LeftController").transform;
+        //rightArm = GameObject.FindWithTag("RightController");
         SelectedUnits = new List<GameObject>();
+
         //int doubleclickcounter = 0;
         SwitchLeftHandUIScreen("none");
     }
@@ -45,6 +49,7 @@ public class Select : MonoBehaviour
     { 
         Physics.Raycast(RightArmPosition.position, RightArmPosition.TransformDirection(Vector3.forward), out RightRaycastHit, Mathf.Infinity);
         Physics.Raycast(LeftArmPosition.position, LeftArmPosition.TransformDirection(Vector3.forward), out LeftRaycastHit, Mathf.Infinity);
+        //RightRaycastHit = rightArm.GetComponent<XRRayInteractor>().raycastHit;
         RightCursor.transform.position = RightRaycastHit.point;
         LeftCursor.transform.position = LeftRaycastHit.point;
         ButtonValue = SelectActionRefrence.action.ReadValue<float>();
@@ -52,12 +57,12 @@ public class Select : MonoBehaviour
 
         if (ButtonValue == 1) //if the a button is pressed
         {
-            if (DrawingSelectionBox == false)
+            if (DrawingSelectionBox == false) //and you are not drawing the selection box
             {
-                if (RightRaycastHit.collider.gameObject.transform.parent.tag == "Units") //if you click a single unit or building, select it
+                if (RightRaycastHit.collider.gameObject.transform.parent.name == "Units") //if you clicked a single unit or building select it and start the double click countdown
                 {
-                  DeselectUnits();
-                  SelectedUnits.Add(RightRaycastHit.collider.gameObject);
+                    DeselectUnits();
+                    SelectUnit(RightRaycastHit.collider.gameObject);
                     if (RightRaycastHit.collider.gameObject.GetComponent<UnitBehaviour>().unitType == "builder")
                     {        
                         SwitchLeftHandUIScreen("BuilderUnitScreen");
@@ -67,24 +72,22 @@ public class Select : MonoBehaviour
                         SwitchLeftHandUIScreen("UnitScreen");
                     }
                 }    
-                else if (RightRaycastHit.collider.gameObject.transform.parent.tag == "Buildings")
+                else if (RightRaycastHit.collider.gameObject.transform.parent.name == "Buildings")
                 {
                     DeselectUnits();
-                    SelectedUnits.Add(RightRaycastHit.collider.gameObject);
+                    SelectUnit(RightRaycastHit.collider.gameObject);
                     SwitchLeftHandUIScreen("BuildingScreen");
 
                 }
                 else
                 {
                     //start drawing selection box
-                    DeselectUnits();
                     SelectionBox = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    Renderer cubeRenderer = SelectionBox.GetComponent<Renderer>();
-                    cubeRenderer.material.SetColor("_Color", Color.blue);
+                    //Renderer cubeRenderer = SelectionBox.GetComponent<Renderer>();
+                    //cubeRenderer.material.SetColor("_Color", Color.yellow);
                     SelectionBox.name = "SelectionBox";
                     StartSelectionBox.x = RightRaycastHit.point.x;
                     StartSelectionBox.z = RightRaycastHit.point.z;
-                    StartSelectionBox.y = 1;
                     SelectionBox.transform.position = StartSelectionBox;
                     DrawingSelectionBox = true;
                 }
@@ -102,88 +105,109 @@ public class Select : MonoBehaviour
 
         } else {//if button is not being pushed
             if (DrawingSelectionBox == true)// and the selection box was being drawn
-            { 
+            {
                 /*basically, go through all the hit detections in the box and find out what kind of objects are there, if it's a mix only select the military units,
-                 if it's a mix of builders and buildings only select the builders, if only buildings are within the box then select them all*/
+                 if it's builders and buildings only select the builders, if only buildings are within the box then select them*/
 
                 //select units within
+                DeselectUnits();
                 bool hasMilitaryunits = false;
                 bool hasBuildings = false;
                 bool hasBuilderUnits = false;
                 Collider[] hitColliders = Physics.OverlapBox(SelectionBox.transform.position, SelectionBox.transform.localScale / 2, Quaternion.identity);//get a list of objects within the selection box
                 int counter = 0;
+                Debug.Log("overlap box drawn");
                 while (counter < hitColliders.Length) //go through hit detections and see what kind of units are selected
                 {
                     if (hitColliders[counter].name != "SelectionBox") { // if not looking at the selection box itself
-                        if (hitColliders[counter].transform.parent.name == "Units")//if a unit is selected
+                        if (hitColliders[counter].transform.parent.name == "Units")//and if a unit is selected
                         {
-                            if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType != "builder")//and its a builder 
+                            if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "builder")//and its a builder 
                             {
                                 hasBuilderUnits = true;//a builder is selected
-                            } else
+
+                            }
+                            else
                             {
                                 hasMilitaryunits = true;//if its not a builder a military unit selected
+
                             }
                         } else if (hitColliders[counter].transform.parent.name == "Buildings") // if a building is selected
                             {
-                                hasBuildings = true; //there is a building selected, duh
-                            }
+                                hasBuildings = true; //there is a building selected :O
+                        }
 
                     }
                     counter++;
                 }
-                if (hasMilitaryunits == true) //if military units are detected select only the military units
+                Debug.Log("counter should get to " + hitColliders.Length);
+
+                if (hasMilitaryunits == true) //if military units are detected
                 {
                     counter = 0;
                     while (counter < hitColliders.Length)
                     {
-                        if (hitColliders[counter].transform.parent.name == "Units" && hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType != "builder")
-                        {
-                            SelectedUnits.Add(hitColliders[counter].gameObject);
+                        if (hitColliders[counter].name != "SelectionBox") { 
+                            if (hitColliders[counter].transform.parent.name == "Units"){
+                                if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType != "builder")
+                                {
+                                    SelectUnit(hitColliders[counter].gameObject); //select the units which are not builders
+                                }
+                            }
                         }
+                        Debug.Log("military detected units, counter got to " + counter);
                         counter++;
                     }
                     SwitchLeftHandUIScreen("UnitScreen");
-                } else // if no military units are detected
+                }
+                else // if no military units are detected
                 {
                     if (hasBuilderUnits == true) //and builders are detected
                     {
                         counter = 0;
-                        while (counter < hitColliders.Length)//go through the detects and select only the builders
+                        while (counter < hitColliders.Length)//go through the detections and select only the builders
                         {
-                            if (hitColliders[counter].transform.parent.name == "Units" && hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "builder")//if a unit is selected
+                            if (hitColliders[counter].name != "SelectionBox")
                             {
-                                SelectedUnits.Add(hitColliders[counter].gameObject);
+                                if (hitColliders[counter].transform.parent.name == "Units")
+                                {
+                                    if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "builder")
+                                    {
+                                        SelectUnit(hitColliders[counter].gameObject);
+
+                                    }
+                                }
                             }
                             counter++;
                         }
                         SwitchLeftHandUIScreen("BuilderUnitScreen");
-                    } else if (hasBuildings == true) 
+                    } else if (hasBuildings == true) //if only buildings are detected select them
                     {
                         counter = 0;
                         while (counter < hitColliders.Length)
                         {
-                            if (hitColliders[counter].transform.parent.name == "Buildings")//if a unit is selected
-                            {
-                                SelectedUnits.Add(hitColliders[counter].gameObject);
-                            }
+                                if (hitColliders[counter].name != "SelectionBox")
+                                {
+                                    if (hitColliders[counter].transform.parent.name == "Buildings")//if a unit is selected
+                                    {
+                                        SelectUnit(hitColliders[counter].gameObject);
+                                    }
+                                }
                             counter++;
                         }
                         SwitchLeftHandUIScreen("BuildingScreen");
-
                     }
-               
-
                 }
-
-                Debug.Log("selectedUnits.Count " + SelectedUnits.Count);
-
                 DrawingSelectionBox = false;
                 Destroy(SelectionBox);
             }
         }
     }
-
+    private void SelectUnit(GameObject unit) //function to select a single unit
+    {
+        SelectedUnits.Add(unit);
+        unit.GetComponent<UnitBehaviour>().Select();
+    }
     private void SwitchLeftHandUIScreen(string screen) //switches the menu on the left hand depending on what is selected
     {
         buildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
@@ -218,7 +242,7 @@ public class Select : MonoBehaviour
     }
 
 
-    private void DeselectUnits() //deslects the units and resets the left hand ui
+    private void DeselectUnits() //deslects the units and resets the left hand UI
     {
         if (SelectedUnits.Count > 0)
         {

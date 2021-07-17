@@ -10,8 +10,9 @@ public class DebugDisplay : MonoBehaviour
 
     private void Update()
     {
+        Debug.Log("Debug Log");
         Debug.Log("Time:" + Time.time);
-        Debug.Log(gameObject.name);
+
     }
     private void OnEnable()
     {
@@ -34,10 +35,11 @@ public class DebugDisplay : MonoBehaviour
                 debugLogs[debugKey] = debugValue;
             else
                 debugLogs.Add(debugKey, debugValue);
-            
+           
         }
 
         string displayText = "";
+        int count = 0;
         foreach (KeyValuePair<string, string> log in debugLogs) {
             if (log.Value == "")
                 displayText += log.Key + "\n";
@@ -45,9 +47,10 @@ public class DebugDisplay : MonoBehaviour
             {
                 displayText += log.Key + ": " + log.Value + "\n";
             }
-
-         }
+            count++;
+        }
         display.text = displayText;
+
     }
-        
+
 }
