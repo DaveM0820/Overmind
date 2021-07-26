@@ -8,12 +8,6 @@ public class DebugDisplay : MonoBehaviour
     Dictionary<string, string> debugLogs = new Dictionary<string, string>();
     public Text display;
 
-    private void Update()
-    {
-        Debug.Log("Debug Log");
-        Debug.Log("Time:" + Time.time);
-
-    }
     private void OnEnable()
     {
         Application.logMessageReceived += HandleLog;

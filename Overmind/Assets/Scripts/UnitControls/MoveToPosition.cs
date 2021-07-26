@@ -20,6 +20,10 @@ public class MoveToPosition : MonoBehaviour {
     public void SetMovePosition(Vector3 movePosition)
     {
         this.movePosition = movePosition;
+        //float targetAgnle = Mathf.Atan2()
+        //float angleTarget = Vector3.Angle(transform.position, movePosition);
+
+       // transform.rotation =  Quaternion.Euler(0, angle, 0);
         moving = true;
     }
 

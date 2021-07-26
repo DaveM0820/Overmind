@@ -21,11 +21,13 @@ public class Select : MonoBehaviour
     private GameObject LeftCursor;
     private GameObject SelectionBox = null; //the selection box itself
 
-    private GameObject buildingScreen; //the left hand nav screens
-    private GameObject unitScreen;
-    private GameObject builderUnitScreen;
+    public bool allBuilder;
 
-    private GameObject rightArm;
+    //private GameObject buildingScreen; //the left hand nav screens
+    //private GameObject unitScreen;
+    //private GameObject builderUnitScreen;
+
+
 
     public static List<GameObject> SelectedUnits = null;
 
@@ -33,12 +35,13 @@ public class Select : MonoBehaviour
     {
         DrawingSelectionBox = false;
         ButtonValue = 0;
-        RightCursor = GameObject.Find("/Cursor");
-        LeftCursor = Instantiate(RightCursor);
+        RightCursor = GameObject.Find("/UI/RightCursor");
+        LeftCursor = GameObject.Find("/UI/LeftCursor");
         RightArmPosition = GameObject.FindWithTag("RightController").transform;
         LeftArmPosition = GameObject.FindWithTag("LeftController").transform;
-        //rightArm = GameObject.FindWithTag("RightController");
         SelectedUnits = new List<GameObject>();
+        allBuilder = false;
+
 
         //int doubleclickcounter = 0;
         SwitchLeftHandUIScreen("none");
@@ -46,14 +49,14 @@ public class Select : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    { 
-        Physics.Raycast(RightArmPosition.position, RightArmPosition.TransformDirection(Vector3.forward), out RightRaycastHit, Mathf.Infinity);
+    {
+        int layerMask = 1 << 6;//layer 6 is ground, bitshift 1 to 6
+        Physics.Raycast(RightArmPosition.position, RightArmPosition.TransformDirection(Vector3.forward), out RightRaycastHit, Mathf.Infinity,layerMask);
         Physics.Raycast(LeftArmPosition.position, LeftArmPosition.TransformDirection(Vector3.forward), out LeftRaycastHit, Mathf.Infinity);
         //RightRaycastHit = rightArm.GetComponent<XRRayInteractor>().raycastHit;
-        RightCursor.transform.position = RightRaycastHit.point;
-        LeftCursor.transform.position = LeftRaycastHit.point;
+        RightCursor.transform.position = new Vector3(RightRaycastHit.point.x,0, RightRaycastHit.point.z);
+        LeftCursor.transform.position = new Vector3(LeftRaycastHit.point.x,0, LeftRaycastHit.point.z);
         ButtonValue = SelectActionRefrence.action.ReadValue<float>();
-        Debug.Log("select script update running, a button value: " + ButtonValue);
 
         if (ButtonValue == 1) //if the a button is pressed
         {
@@ -116,14 +119,19 @@ public class Select : MonoBehaviour
                 bool hasBuilderUnits = false;
                 Collider[] hitColliders = Physics.OverlapBox(SelectionBox.transform.position, SelectionBox.transform.localScale / 2, Quaternion.identity);//get a list of objects within the selection box
                 int counter = 0;
-                Debug.Log("overlap box drawn");
                 while (counter < hitColliders.Length) //go through hit detections and see what kind of units are selected
                 {
+
                     if (hitColliders[counter].name != "SelectionBox") { // if not looking at the selection box itself
+
                         if (hitColliders[counter].transform.parent.name == "Units")//and if a unit is selected
+
                         {
+
                             if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "builder")//and its a builder 
+
                             {
+
                                 hasBuilderUnits = true;//a builder is selected
 
                             }
@@ -140,7 +148,7 @@ public class Select : MonoBehaviour
                     }
                     counter++;
                 }
-                Debug.Log("counter should get to " + hitColliders.Length);
+
 
                 if (hasMilitaryunits == true) //if military units are detected
                 {
@@ -155,42 +163,58 @@ public class Select : MonoBehaviour
                                 }
                             }
                         }
-                        Debug.Log("military detected units, counter got to " + counter);
                         counter++;
                     }
                     SwitchLeftHandUIScreen("UnitScreen");
                 }
                 else // if no military units are detected
                 {
+
+
+
                     if (hasBuilderUnits == true) //and builders are detected
                     {
-                        counter = 0;
+                        counter = 0; 
+
                         while (counter < hitColliders.Length)//go through the detections and select only the builders
                         {
+
                             if (hitColliders[counter].name != "SelectionBox")
                             {
+
                                 if (hitColliders[counter].transform.parent.name == "Units")
                                 {
+
                                     if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "builder")
                                     {
+
                                         SelectUnit(hitColliders[counter].gameObject);
+
 
                                     }
                                 }
                             }
+
                             counter++;
+
                         }
                         SwitchLeftHandUIScreen("BuilderUnitScreen");
                     } else if (hasBuildings == true) //if only buildings are detected select them
+
                     {
+                        allBuilder = true;
                         counter = 0;
+
                         while (counter < hitColliders.Length)
                         {
+
                                 if (hitColliders[counter].name != "SelectionBox")
                                 {
-                                    if (hitColliders[counter].transform.parent.name == "Buildings")//if a unit is selected
+
+                                if (hitColliders[counter].transform.parent.name == "Buildings")//if a unit is selected
                                     {
-                                        SelectUnit(hitColliders[counter].gameObject);
+
+                                    SelectUnit(hitColliders[counter].gameObject);
                                     }
                                 }
                             counter++;
@@ -205,25 +229,50 @@ public class Select : MonoBehaviour
     }
     private void SelectUnit(GameObject unit) //function to select a single unit
     {
+
         SelectedUnits.Add(unit);
+
         unit.GetComponent<UnitBehaviour>().Select();
+
     }
-    private void SwitchLeftHandUIScreen(string screen) //switches the menu on the left hand depending on what is selected
+    public void SwitchLeftHandUIScreen(string screen) //switches the menu on the left hand depending on what is selected
     {
-        buildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
-        unitScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/UnitScreen");
-        builderUnitScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuilderUnitScreen");
+        GameObject buildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
+        GameObject unitScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/UnitScreen");
+        GameObject builderUnitScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuilderUnitScreen");
+        GameObject builderUnitScreenDirectControlButton = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuilderUnitScreen/AssumeDirectControl");
+        GameObject directControlScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/DirectControlScreen");
+
+        if (screen == "DirectControlScreen")
+        {
+            buildingScreen.SetActive(false);
+            builderUnitScreen.SetActive(false);
+            unitScreen.SetActive(false);
+            directControlScreen.SetActive(true);
+            allBuilder = false;
+
+        }
         if (screen == "BuilderUnitScreen")
         {
             buildingScreen.SetActive(false);
             unitScreen.SetActive(false);
             builderUnitScreen.SetActive(true);
+            allBuilder = true;
+            if (SelectedUnits.Count == 1) { 
+            builderUnitScreenDirectControlButton.SetActive(true);
+            }
+            else
+            {
+            builderUnitScreenDirectControlButton.SetActive(false);
+            }
         }
         if (screen == "UnitScreen")
         {
             buildingScreen.SetActive(false);
             builderUnitScreen.SetActive(false);
             unitScreen.SetActive(true);
+            allBuilder = false;
+
         }
 
         if (screen == "BuildingScreen")
@@ -231,6 +280,8 @@ public class Select : MonoBehaviour
             builderUnitScreen.SetActive(false);
             unitScreen.SetActive(false);
             buildingScreen.SetActive(true);
+            allBuilder = false;
+
 
         }
         if (screen == "none")
@@ -238,6 +289,10 @@ public class Select : MonoBehaviour
             buildingScreen.SetActive(false);
             builderUnitScreen.SetActive(false);
             unitScreen.SetActive(false);
+            directControlScreen.SetActive(false);
+            allBuilder = false;
+
+
         }
     }
 
@@ -257,5 +312,5 @@ public class Select : MonoBehaviour
         SwitchLeftHandUIScreen("none");
 
     }
-  
+
 }
