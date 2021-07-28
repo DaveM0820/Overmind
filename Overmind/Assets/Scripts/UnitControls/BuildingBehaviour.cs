@@ -16,6 +16,21 @@ public class BuildingBehaviour : MonoBehaviour
     private float hpMax;
     private float hpPercent;
     private float elapsed;
+    public Vector3 rallyPoint;
+    public Vector3 CreationPoint;
+    public bool xNegitiveSideClear;
+    public bool xPositiveSideClear;
+    public bool zNegitiveSideClear;
+    public bool zPositiveSideClear;
+    private float unitBuildProgress;
+    public float unitBuildTime;
+
+    private void Start()
+    {
+        unitBuildProgress = 0;
+        unitBuildTime = 0;
+
+    }
 
     void Update()
     {
@@ -34,7 +49,36 @@ public class BuildingBehaviour : MonoBehaviour
 
         }
     }
+    public void BuildUnit(GameObject unit)
+    {
+        Debug.Log("BuildingBehaviour script got order");
 
+        unitBuildProgress += GetComponent<UnitBehaviour>().updateTimestep;
+        unitBuildTime = unit.GetComponent<UnitBehaviour>().unitBuildTime;
+        if(unitBuildProgress> unitBuildTime)
+        {
+            GameObject.Find("/XR Rig").GetComponent<GlobalGameInformation>().numberOfUnitsBuilt += 1;
+            GameObject newUnit = Instantiate(unit,unit.transform.parent);
+            newUnit.name = unit.name + GameObject.Find("/XR Rig").GetComponent<GlobalGameInformation>().numberOfUnitsBuilt;
+            newUnit.GetComponent<UnitBehaviour>().hp = unit.GetComponent<UnitBehaviour>().hp;
+            newUnit.GetComponent<UnitBehaviour>().hpMax = unit.GetComponent<UnitBehaviour>().hpMax;
+            newUnit.GetComponent<UnitBehaviour>().owner = unit.GetComponent<UnitBehaviour>().owner;
+            newUnit.GetComponent<UnitBehaviour>().unitType = unit.GetComponent<UnitBehaviour>().unitType;
+            newUnit.GetComponent<UnitBehaviour>().unitRange = unit.GetComponent<UnitBehaviour>().unitRange; 
+            newUnit.GetComponent<UnitBehaviour>().cameraSizeWhenUnderDirectControl = unit.GetComponent<UnitBehaviour>().cameraSizeWhenUnderDirectControl;
+            newUnit.GetComponent<UnitBehaviour>().headHeight = unit.GetComponent<UnitBehaviour>().headHeight;
+            newUnit.GetComponent<UnitBehaviour>().moveType = unit.GetComponent<UnitBehaviour>().moveType;
+            newUnit.GetComponent<UnitBehaviour>().moveSpeed = unit.GetComponent<UnitBehaviour>().moveSpeed;
+            newUnit.GetComponent<UnitBehaviour>().turnSpeed = unit.GetComponent<UnitBehaviour>().turnSpeed;
+            newUnit.GetComponent<UnitBehaviour>().acceleration = unit.GetComponent<UnitBehaviour>().acceleration;
+            newUnit.transform.position = transform.position + new Vector3(0, 0, -20);
+            unitBuildProgress = 0;
+            newUnit.SetActive(true);
+            GetComponent<UnitBehaviour>().OrderComplete();
+            Debug.Log("BuildingBehaviour finished order");
+
+        }
+    }
     // Update is called once per frame
     public void UpdateScaffold()
     {

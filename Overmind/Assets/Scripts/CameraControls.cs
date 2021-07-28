@@ -49,11 +49,21 @@ public class CameraControls : MonoBehaviour
     float newHeight;
     private GameObject player;
 
+    public float maxFog;
+
     float initialAngle;
     float currentAngle;
     float deltaAngle;
     float angleToRotate;
     float angleVelocity;
+
+    GameObject virtualLeftCursor;
+    GameObject virtualRightCursor;
+    Vector3 virtualLeftCursorVelocity;
+    Vector3 virtualRightCursorVelocity;
+    Vector3 virtualRightCursorPositionDelta;
+    Vector3 virtualLeftCursorPositionDelta;
+
     // Start is called before the first frame update
     private void Start()
     {
@@ -64,6 +74,10 @@ public class CameraControls : MonoBehaviour
         player = GameObject.Find("/XR Rig");
         RightCursor = GameObject.Find("/UI/RightCursor");
         LeftCursor = GameObject.Find("/UI/LeftCursor");
+        virtualLeftCursor = Instantiate(RightCursor);
+       virtualRightCursor = Instantiate(LeftCursor);
+            virtualLeftCursorVelocity = new Vector3(0,0,0);
+        virtualRightCursorVelocity = new Vector3(0, 0, 0);
     }
 
 
@@ -71,10 +85,21 @@ public class CameraControls : MonoBehaviour
     void Update()
     {
         if (assumingDirectControl == false)
-        {
+        {          
+            virtualLeftCursorPositionDelta = virtualLeftCursor.transform.position - LeftCursor.transform.position;
+            virtualRightCursorPositionDelta = virtualRightCursor.transform.position - RightCursor.transform.position;
+
+            virtualLeftCursorVelocity += virtualLeftCursorPositionDelta;
+            virtualRightCursorVelocity += virtualRightCursorPositionDelta;
+
+            virtualLeftCursorVelocity *= 0.1f;
+            virtualRightCursorVelocity *= 0.1f;
+
+            virtualLeftCursor.transform.position += virtualLeftCursorVelocity;
+            virtualRightCursor.transform.position += virtualRightCursorVelocity;
+            
             rightGripValue = RightGripActionRefrence.action.ReadValue<float>();//get current value of grip button
             leftGripValue = LeftGripActionRefrence.action.ReadValue<float>();//get current value of grip button
-
             if (rightGripValue > 0 && leftGripValue == 0)//if only right grip is pressed
             {
                 if (initialRightPositionsSet == false)
@@ -118,6 +143,9 @@ public class CameraControls : MonoBehaviour
 
                 if (initialBothPositionsSet == false)
                 {
+                    Vector3 initialVirtualRightCursorPosition = virtualLeftCursor.transform.position;
+                    Vector3 initialVirtualLeftCursorPosition = virtualRightCursor.transform.position;
+
                     initialRightCursorPosition = RightCursor.transform.position;
                     initialLeftCursorPosition = LeftCursor.transform.position;
                     initialMidPoint = (initialLeftCursorPosition + initialRightCursorPosition) / 2;
@@ -125,7 +153,8 @@ public class CameraControls : MonoBehaviour
                     initialPlayerPosition = transform.position;
                     initialHeight = transform.position.y;
                     initialBothPositionsSet = true;
-                    initialAngle = Vector3.Angle(LeftCursor.transform.position, RightCursor.transform.position);
+                    initialAngle = Mathf.Atan2(LeftCursor.transform.position.x - RightCursor.transform.position.x, LeftCursor.transform.position.z - RightCursor.transform.position.z) * Mathf.Rad2Deg;
+
                 }
                 currentMidPoint = (LeftCursor.transform.position + RightCursor.transform.position) / 2;
                 Vector3 positionDelta = initialMidPoint - currentMidPoint;
@@ -134,30 +163,35 @@ public class CameraControls : MonoBehaviour
                 currentDistance = Vector3.Distance(LeftCursor.transform.position, RightCursor.transform.position);
                 deltaDistance = initialDistance - currentDistance;
                 newHeight = initialHeight + deltaDistance;
-                float deltaHeight = transform.position.y - newHeight;
-                zoomVelocity -= zoomSpeed * deltaHeight;
-                zoomVelocity *= zoomSmoothing;
-                currentAngle = Vector3.Angle(LeftCursor.transform.position, RightCursor.transform.position);
-                deltaAngle = currentAngle - initialAngle;
-
-                angleToRotate = deltaAngle;
-               // Debug.Log("deltaAngle = " + deltaAngle);
-                initialAngle = currentAngle;
-     
-//transform.RotateAround(currentMidPoint, Vector3.up, angleToRotate);
-                //transform.LookAt(currentMidPoint);
-
                 if (newHeight > maxHeight)
                 {
                     newHeight = maxHeight;
-
-                } else if (newHeight < minHeight)
+                }
+                else if (newHeight < minHeight)
                 {
-                   newHeight = minHeight;
+                    newHeight = minHeight;
+                }
+                float deltaHeight = transform.position.y - newHeight;
+                zoomVelocity -= zoomSpeed * deltaHeight;
+                zoomVelocity *= zoomSmoothing;
+                float newAngle = 45f + (40f * ((transform.position.y - minHeight) / (maxHeight - minHeight)));
+                if (newAngle > 89f)
+                {
+                    newAngle = 89f;
 
                 }
+                currentAngle = Mathf.Atan2(LeftCursor.transform.position.x - RightCursor.transform.position.x, LeftCursor.transform.position.z - RightCursor.transform.position.z) * Mathf.Rad2Deg;
+                deltaAngle = currentAngle - initialAngle;    
+                transform.rotation = Quaternion.Euler(newAngle, transform.localEulerAngles.y, transform.localEulerAngles.z);
+                initialAngle += currentAngle * rotateSmoothing;
+                angleToRotate += deltaAngle * rotateSpeed;
+               // Debug.Log("deltaAngle = " + deltaAngle);
+                initialAngle = currentAngle;
+     
+               transform.RotateAround(currentMidPoint, Vector3.up, -angleToRotate);
+
                 transform.position = new Vector3(transform.position.x, transform.position.y + zoomVelocity, transform.position.z);
-                float newFogDensity = 0.002f - ((transform.position.y - minHeight) / (maxHeight*500));
+                float newFogDensity = maxFog - (maxFog * (transform.position.y/maxHeight));
                 if (newFogDensity < 0.00015f)
                 {
                     newFogDensity = 0.00015f;
@@ -169,7 +203,6 @@ public class CameraControls : MonoBehaviour
             }
             else
             {
-
                 initialBothPositionsSet = false;
             }
 

@@ -7,7 +7,10 @@ public class GlobalGameInformation : MonoBehaviour
     // Start is called before the first frame update
     public float updateFPS;
     public float updateTimestep;
+    public float buildingUpdateFPS;
+    public float buildingUpdateTimestep;
 
+    public int numberOfUnitsBuilt;
     public int numberOfPlayers;
     public List<int> playerResources;
     public List<int> playerScore;
@@ -18,6 +21,8 @@ public class GlobalGameInformation : MonoBehaviour
     void Start()
     {
         updateTimestep = 1 / updateFPS;
+        buildingUpdateTimestep = 1 / buildingUpdateFPS;
+        numberOfUnitsBuilt = 0;
         int count = 0;
         while (count < numberOfPlayers)
         {
@@ -30,6 +35,5 @@ public class GlobalGameInformation : MonoBehaviour
 
     }
     
-    // Update is called once per frame
 
 }

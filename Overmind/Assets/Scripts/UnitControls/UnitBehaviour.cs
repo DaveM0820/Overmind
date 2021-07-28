@@ -13,6 +13,8 @@ public class UnitBehaviour : MonoBehaviour
     public float hp;
     public float hpPercent;
     public string unitType;
+    public float unitBuildTime;
+    public bool isBuilding;
 
     public float unitRange; //range of weapons
     public float cameraSizeWhenUnderDirectControl;
@@ -22,10 +24,13 @@ public class UnitBehaviour : MonoBehaviour
     public float turnSpeed;
     public float acceleration;
     private bool moving;
+    private bool angleSet;
     float elapsed;
-    float updateTimestep;
+    public float updateTimestep;
     public List<Order> OrderQueue;
     int howmanyupdates;
+
+    private bool queueIsEmpty;
     private void Start()
     {
         elapsed = 0;
@@ -33,7 +38,15 @@ public class UnitBehaviour : MonoBehaviour
         OrderQueue = new List<Order>();
         selectionMarker = transform.Find("SelectionMarker");
         Deselect();
-        updateTimestep = player.GetComponent<GlobalGameInformation>().updateTimestep;
+        if (isBuilding == false)
+        {
+            updateTimestep = player.GetComponent<GlobalGameInformation>().updateTimestep;
+        }
+        else
+        {
+            updateTimestep = player.GetComponent<GlobalGameInformation>().buildingUpdateTimestep;
+        }
+        angleSet = false;
     }
     // bascially orders are sent from UnitCommand and added to the order queue for each unit in their UnitBehaviour, the orders are then sent back to UnitCommand to be executed
     // UnitCommand determines when the order is complete and remove it from the queue
@@ -50,10 +63,8 @@ public class UnitBehaviour : MonoBehaviour
     }
     private void UpdateUnit()
     {
-       // howmanyupdates++;
-
-        //Debug.Log("UpdateUnit :" + howmanyupdates);
-
+        if (queueIsEmpty == false)
+        {
         if (OrderQueue[0].orderType == "move")
         {
              if (moveType == "direct")
@@ -67,9 +78,11 @@ public class UnitBehaviour : MonoBehaviour
         }
         if (OrderQueue[0].orderType == "build")
         {
-            gameObject.GetComponent<BuilderUnitBehaviour>().Build(OrderQueue[0].orderTarget);
-        }
-        if (OrderQueue[0].orderType == "attack")
+
+                gameObject.GetComponent<BuilderUnitBehaviour>().Build(OrderQueue[0].orderTarget);
+
+            }
+            if (OrderQueue[0].orderType == "attack")
         {
 
         }
@@ -85,24 +98,33 @@ public class UnitBehaviour : MonoBehaviour
         {
 
         }
+            if (OrderQueue[0].orderType == "buildunit")
+            {
+
+                gameObject.GetComponent<BuildingBehaviour>().BuildUnit(OrderQueue[0].orderTarget);
+
+
+            }
+        }
     }
 
 
     public void addOrderToQueue(Order order)
     {
-        Debug.Log("Got one " + order.orderType + " order");
+        queueIsEmpty = false;
 
         if (order.emptyQueue == true)
         {
             OrderComplete();
             OrderQueue.Clear();
+            
         }
         OrderQueue.Add(order);
-      /*  int count = 0;
-        while (count < OrderQueue.Count)
-        {
-            count++;
-        }*/
+        /*  int count = 0;
+          while (count < OrderQueue.Count)
+          {
+              count++;
+          }*/
     }
 
     public void OrderComplete()
@@ -113,6 +135,11 @@ public class UnitBehaviour : MonoBehaviour
                 gameObject.GetComponent<BuilderUnitBehaviour>().stopBuilding();
             }
             OrderQueue.RemoveRange(0, 1);
+        }
+        if (OrderQueue.Count == 0)
+        {
+            Debug.Log("OrderComplete OrderQueue.Count == 0");
+            queueIsEmpty = true;
         }
       
     }
@@ -136,7 +163,13 @@ public class UnitBehaviour : MonoBehaviour
     }
     private void MoveDirect()
     {
+        if (angleSet == false)
+        {
+            float unitAngle = Mathf.Atan2(transform.position.x - OrderQueue[0].orderPosition.x, transform.position.z - OrderQueue[0].orderPosition.z) * Mathf.Rad2Deg;
 
+            angleSet = true;
+
+        }
         Vector3 moveDir = (OrderQueue[0].orderPosition - transform.position).normalized;
         if (Vector3.Distance(OrderQueue[0].orderPosition, transform.position) < 1f) // if within 1m of destination
         {
@@ -145,7 +178,9 @@ public class UnitBehaviour : MonoBehaviour
         }
         else
         {
-            transform.position += moveDir * moveSpeed * updateTimestep;
+            Vector3 moveDistance = moveDir * moveSpeed * updateTimestep;
+            moveDistance = new Vector3(moveDistance.x, 0, moveDistance.z);
+            transform.position += moveDistance;
 
         }
     }

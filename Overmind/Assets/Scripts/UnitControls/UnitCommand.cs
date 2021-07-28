@@ -209,7 +209,7 @@ public class UnitCommand : MonoBehaviour
                 }
                 else if (transform.parent.name == "Units")
                 {
-                    if (rightRaycastHit.collider.gameObject.GetComponent<UnitBehaviour>().unitType == "builder")
+                    if (rightRaycastHit.collider.gameObject.GetComponent<UnitBehaviour>().unitType == "Builder")
                     {
                         //  Debug.Log("transform.parent.name == Units");
 
@@ -250,10 +250,8 @@ public class UnitCommand : MonoBehaviour
             float distanceToBuilding = Vector3.Distance(currentUnit.transform.position, buildingHit.point);
             float distanceToTravel = distanceToBuilding - (currentUnit.GetComponent<UnitBehaviour>().unitRange * 0.8f);
             Vector3 newPosition = currentUnit.transform.position + (directionToBuilding * distanceToTravel);
-            GameObject newmoveOrderIndicator = Instantiate(GameObject.Find("/UI/MoveOrderIndicator"));
             
             if (Vector3.Distance(currentUnit.transform.position, buildTarget.transform.position) > currentUnit.GetComponent<UnitBehaviour>().unitRange * 0.8f) { // if the unit is far from the building move there first
-                newmoveOrderIndicator.transform.position = newPosition;
                 Order moveorder = new Order("move", newPosition + new Vector3(Random.Range(-2f, 2f), 0, Random.Range(-2f, 2f)), true);
             currentUnit.GetComponent<UnitBehaviour>().addOrderToQueue(moveorder);
 
@@ -293,7 +291,7 @@ public class UnitCommand : MonoBehaviour
         moveOrderIndicator.transform.position = location;
         Destroy(moveOrderIndicator, 2);
 
-        targetPositionList = GetPositionListAroundPoint(location, new float[] { 2f, 3f, 4.5f, 6f, 8f, 10f}, new int[] { 4, 8, 10, 15, 20, 25}); //give units individual points around move order location
+        targetPositionList = GetPositionListAroundPoint(location, new float[] { 2f, 3f, 4.5f, 6f, 8f, 10f,12f,14f,16f}, new int[] { 4, 8, 10, 15, 20, 25,28,32,36}); //give units individual points around move order location
         int counter = 0;
         while (counter < selectedUnits.Count)
         {

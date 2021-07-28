@@ -21,9 +21,13 @@ public class BuilderUnitBehaviour : MonoBehaviour
         updateTimestep = player.GetComponent<GlobalGameInformation>().updateTimestep;
         currentlyBuilding = false;
         builderBeam.transform.localScale = new Vector3(0,0,0);
+        builderBeam.gameObject.SetActive(false);
+
     }
-        public void Build(GameObject building)
+    public void Build(GameObject building)
         {
+        builderBeam.gameObject.SetActive(true);
+
         Debug.Log("public void Build running");
 
         currentlyBuilding = true;
@@ -37,7 +41,7 @@ public class BuilderUnitBehaviour : MonoBehaviour
                 //fire the assist gun
                 //generate new random point on building
                 float scaffoldHeight = building.GetComponent<BuildingBehaviour>().scaffoldHeight;
-                Vector3 beamHit = building.transform.position + new Vector3(Random.Range(0, 10), Random.Range(0, scaffoldHeight), Random.Range(0, 10)) + new Vector3(-5, 0, -5);
+                Vector3 beamHit = building.transform.position + new Vector3(Random.Range(0, 30), Random.Range(0, scaffoldHeight), Random.Range(0, 30)) + new Vector3(-15, 0,-15);
                 builderBeam.LookAt(beamHit,Vector3.up);
                 float beamLength = Vector3.Distance(transform.position, beamHit);
                 builderBeam.localScale = new Vector3(1, 1, beamLength);
@@ -55,7 +59,7 @@ public class BuilderUnitBehaviour : MonoBehaviour
     }
     public void stopBuilding()
     {
-        builderBeam.transform.localScale = new Vector3(0, 0, 0);
+        builderBeam.gameObject.SetActive(false);
         currentlyBuilding = false;
 
 

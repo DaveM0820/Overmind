@@ -40,13 +40,13 @@ public class BuildNewBuilding : MonoBehaviour
         if (placing == false && resources > buildingCost) {
             buildingsbuilt += 1;
             objectToPlace = Instantiate(barracksOrgin, buildings.transform);
-            objectToPlace.GetComponent<BuildingBehaviour>().maxScaffoldHeight = 9;
-            objectToPlace.GetComponent<BuildingBehaviour>().name = "barracks " + buildingsbuilt;
+            objectToPlace.GetComponent<BuildingBehaviour>().maxScaffoldHeight = 11;
+            objectToPlace.GetComponent<BuildingBehaviour>().name = "Barracks " + buildingsbuilt;
             objectToPlace.GetComponent<BuildingBehaviour>().placed = false;
             objectToPlace.GetComponent<BuildingBehaviour>().built = false;
             objectToPlace.GetComponent<UnitBehaviour>().hpMax = 1000;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
-            objectToPlace.GetComponent<UnitBehaviour>().unitType = "barracks";
+            objectToPlace.GetComponent<UnitBehaviour>().unitType = "Barracks";
             objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
             objectToPlace.GetComponent<BuildingBehaviour>().UpdateScaffold();
             player.GetComponent<UnitCommand>().placingBuilding = true;
@@ -62,11 +62,11 @@ public class BuildNewBuilding : MonoBehaviour
             triggerValue = triggerActionRefrence.action.ReadValue<float>();
             Vector3 cursorPosition = RightCursor.transform.position;
             Vector3 reduceScale = cursorPosition;
-            reduceScale.x /= 4f;
-            reduceScale.z /= 4f;
+            reduceScale.x /= 5f;
+            reduceScale.z /= 5f;
             Vector3 roundedPlacement = new Vector3(Mathf.Round(reduceScale.x), cursorPosition.y, Mathf.Round(reduceScale.z));
-            roundedPlacement.x *= 4f;
-            roundedPlacement.z *= 4f;
+            roundedPlacement.x *= 5f;
+            roundedPlacement.z *= 5f;
             roundedPlacement.y = 0;
             objectToPlace.transform.position = roundedPlacement;
             if (triggerValue == 1 && buildingCollision == false)

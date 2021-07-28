@@ -52,8 +52,7 @@ public class Select : MonoBehaviour
     {
         int layerMask = 1 << 6;//layer 6 is ground, bitshift 1 to 6
         Physics.Raycast(RightArmPosition.position, RightArmPosition.TransformDirection(Vector3.forward), out RightRaycastHit, Mathf.Infinity,layerMask);
-        Physics.Raycast(LeftArmPosition.position, LeftArmPosition.TransformDirection(Vector3.forward), out LeftRaycastHit, Mathf.Infinity);
-        //RightRaycastHit = rightArm.GetComponent<XRRayInteractor>().raycastHit;
+        Physics.Raycast(LeftArmPosition.position, LeftArmPosition.TransformDirection(Vector3.forward), out LeftRaycastHit, Mathf.Infinity, layerMask);
         RightCursor.transform.position = new Vector3(RightRaycastHit.point.x,0, RightRaycastHit.point.z);
         LeftCursor.transform.position = new Vector3(LeftRaycastHit.point.x,0, LeftRaycastHit.point.z);
         ButtonValue = SelectActionRefrence.action.ReadValue<float>();
@@ -66,7 +65,7 @@ public class Select : MonoBehaviour
                 {
                     DeselectUnits();
                     SelectUnit(RightRaycastHit.collider.gameObject);
-                    if (RightRaycastHit.collider.gameObject.GetComponent<UnitBehaviour>().unitType == "builder")
+                    if (RightRaycastHit.collider.gameObject.GetComponent<UnitBehaviour>().unitType == "Builder")
                     {        
                         SwitchLeftHandUIScreen("BuilderUnitScreen");
                     }
@@ -128,7 +127,7 @@ public class Select : MonoBehaviour
 
                         {
 
-                            if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "builder")//and its a builder 
+                            if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "Builder")//and its a builder 
 
                             {
 
@@ -157,7 +156,7 @@ public class Select : MonoBehaviour
                     {
                         if (hitColliders[counter].name != "SelectionBox") { 
                             if (hitColliders[counter].transform.parent.name == "Units"){
-                                if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType != "builder")
+                                if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType != "Builder")
                                 {
                                     SelectUnit(hitColliders[counter].gameObject); //select the units which are not builders
                                 }
@@ -185,7 +184,7 @@ public class Select : MonoBehaviour
                                 if (hitColliders[counter].transform.parent.name == "Units")
                                 {
 
-                                    if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "builder")
+                                    if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "Builder")
                                     {
 
                                         SelectUnit(hitColliders[counter].gameObject);
