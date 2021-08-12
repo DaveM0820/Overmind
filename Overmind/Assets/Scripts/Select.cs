@@ -280,6 +280,7 @@ public class Select : MonoBehaviour
             unitScreen.SetActive(false);
             buildingScreen.SetActive(true);
             allBuilder = false;
+            buildingScreen.GetComponent<LefthandUIBuilding>().UpdateUnitQueueDisplay();
 
 
         }

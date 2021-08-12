@@ -5,7 +5,7 @@ using UnityEngine;
 public class BuildingBehaviour : MonoBehaviour
 {
     // Start is called before the first frame update
-    public List<string> buildQueue;
+    public List<string> buildableUnits;
     private Transform scaffold;
     public float maxScaffoldHeight;
     private float scaffoldPosition;
@@ -18,17 +18,22 @@ public class BuildingBehaviour : MonoBehaviour
     private float elapsed;
     public Vector3 rallyPoint;
     public Vector3 CreationPoint;
-    public bool xNegitiveSideClear;
-    public bool xPositiveSideClear;
-    public bool zNegitiveSideClear;
-    public bool zPositiveSideClear;
     private float unitBuildProgress;
     public float unitBuildTime;
+
+    public bool leftSideClear;
+    public bool rightSideClear;
+    public bool topSideClear;
+    public bool bottomSideClear;
+    GameObject player;
+
+    public Vector2 buidlingDimensions;
 
     private void Start()
     {
         unitBuildProgress = 0;
         unitBuildTime = 0;
+        rallyPoint = new Vector3(transform.position.x, transform.position.y , transform.position.z - 10);
 
     }
 
@@ -44,18 +49,33 @@ public class BuildingBehaviour : MonoBehaviour
             }
         } else
         {
-            scaffold.gameObject.SetActive(false);
+
 
 
         }
     }
     public void BuildUnit(GameObject unit)
     {
-        Debug.Log("BuildingBehaviour script got order");
 
-        unitBuildProgress += GetComponent<UnitBehaviour>().updateTimestep;
+        if (bottomSideClear || rightSideClear || topSideClear || leftSideClear)
+        {
+            if (Select.SelectedUnits[0] == gameObject && Select.SelectedUnits.Count == 1)
+            {
+                GameObject BuildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
+                if (BuildingScreen.activeInHierarchy == true)
+                {
+                    GameObject buildprogress = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel/BuildingQueue/Viewport/Content/UnitIcon/UnitName/BuildProgress");
+                    buildprogress.transform.localScale = new Vector3((unitBuildProgress / unitBuildTime), buildprogress.transform.localScale.y, buildprogress.transform.localScale.z);
+                }
+
+            }
+
+
+
+            unitBuildProgress += GetComponent<UnitBehaviour>().updateTimestep;
         unitBuildTime = unit.GetComponent<UnitBehaviour>().unitBuildTime;
-        if(unitBuildProgress> unitBuildTime)
+
+            if (unitBuildProgress> unitBuildTime)
         {
             GameObject.Find("/XR Rig").GetComponent<GlobalGameInformation>().numberOfUnitsBuilt += 1;
             GameObject newUnit = Instantiate(unit,unit.transform.parent);
@@ -71,12 +91,27 @@ public class BuildingBehaviour : MonoBehaviour
             newUnit.GetComponent<UnitBehaviour>().moveSpeed = unit.GetComponent<UnitBehaviour>().moveSpeed;
             newUnit.GetComponent<UnitBehaviour>().turnSpeed = unit.GetComponent<UnitBehaviour>().turnSpeed;
             newUnit.GetComponent<UnitBehaviour>().acceleration = unit.GetComponent<UnitBehaviour>().acceleration;
-            newUnit.transform.position = transform.position + new Vector3(0, 0, -20);
+
+                if (bottomSideClear)
+                {
+                    newUnit.transform.position = transform.position + new Vector3(0, 0, -23);
+                }
+   
             unitBuildProgress = 0;
             newUnit.SetActive(true);
             GetComponent<UnitBehaviour>().OrderComplete();
             Debug.Log("BuildingBehaviour finished order");
+                GameObject BuildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
 
+                if (BuildingScreen.activeInHierarchy == true)
+            {
+
+                    BuildingScreen.GetComponent<LefthandUIBuilding>().UpdateUnitQueueDisplay();
+                }
+        }
+        } else
+        {
+            Debug.Log("all exits to buidling blocked");
         }
     }
     // Update is called once per frame
@@ -94,9 +129,11 @@ public class BuildingBehaviour : MonoBehaviour
         {
            built = true;
            gameObject.GetComponent<UnitBehaviour>().hp = hpMax;
+            Destroy(scaffold);
+
 
         }
-      
+
     }
 
 }

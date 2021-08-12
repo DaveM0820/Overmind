@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!319 &31900000
+AvatarMask:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: IK mask
+  m_Mask: 01000000000000000000000001000000010000000000000000000000000000000000000001000000010000000100000001000000
+  m_Elements:
+  - m_Path: 
+    m_Weight: 1
+  - m_Path: Armature
+    m_Weight: 1
+  - m_Path: Armature/IKLegPole.L
+    m_Weight: 1
+  - m_Path: Armature/IKLegPole.R
+    m_Weight: 1
+  - m_Path: Armature/ILTarget.L
+    m_Weight: 1
+  - m_Path: Armature/ILTarget.R
+    m_Weight: 1
+  - m_Path: Armature/Root
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2
+    m_Weight: 0
+  - m_Path: Armature/Root/Spine1/Spine2/Neck
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Neck/Bone.004
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Neck/Bone.004/Head
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.L
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.L/UpperArm.L
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.L/UpperArm.L/LowerArm.L
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.L/UpperArm.L/LowerArm.L/Hand.L
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.R
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.R/UpperArm.R
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.R/UpperArm.R/LowerArm.R
+    m_Weight: 1
+  - m_Path: Armature/Root/Spine1/Spine2/Shoulder.R/UpperArm.R/LowerArm.R/Hand.R
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.L
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.L/LowerLeg.L
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.L/LowerLeg.L/Foot.L
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.L/UpperLeg.L.001
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.L/UpperLeg.L.002
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.R
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.R/LowerLeg.R
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.R/LowerLeg.R/Foot.R
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.R/UpperLeg.R.001
+    m_Weight: 1
+  - m_Path: Armature/Root/UpperLeg.R/UpperLeg.R.002
+    m_Weight: 1
+  - m_Path: unit_Infantry_Light_A_Torso
+    m_Weight: 1

@@ -14,23 +14,39 @@ public class BuilderUnitBehaviour : MonoBehaviour
     public float buildStrength;
     private float updateTimestep;
     private Transform builderBeam;
+    private Animator animator;
+    private bool isBuilding;
+    private bool isMoving;
+    private bool angleSet;
     // Start is called before the first frame update
-    private void Start() {
+    void Start() {
         player = GameObject.Find("/XR Rig");
         builderBeam = transform.Find("BuilderBeam");
         updateTimestep = player.GetComponent<GlobalGameInformation>().updateTimestep;
         currentlyBuilding = false;
         builderBeam.transform.localScale = new Vector3(0,0,0);
         builderBeam.gameObject.SetActive(false);
-
+        animator = transform.Find("LOD0").gameObject.GetComponent<Animator>();
+        isBuilding = false;
+        isMoving = false;
+        angleSet = false;
     }
     public void Build(GameObject building)
         {
-        builderBeam.gameObject.SetActive(true);
+        if (isBuilding == false)
+        {
+            builderBeam.gameObject.SetActive(true);
+            isBuilding = true;
+            isMoving = false;
+
+            Vector3 unitAngle = (building.transform.position - transform.position).normalized;
+            transform.forward = unitAngle;
+            animator.SetBool("Building", true);
+
+        }
 
         Debug.Log("public void Build running");
 
-        currentlyBuilding = true;
         reloadProgress += updateTimestep;
         if (reloadProgress >= buildRate)
         {
@@ -60,11 +76,35 @@ public class BuilderUnitBehaviour : MonoBehaviour
     public void stopBuilding()
     {
         builderBeam.gameObject.SetActive(false);
-        currentlyBuilding = false;
-
+        animator.SetBool("Building", false);
+        isBuilding = false;
 
     }
+    public void Move(Vector3 movetarget)
+    {
+        if (isMoving == false)
+        {
+            builderBeam.gameObject.SetActive(false);
+            isMoving = true;
+            isBuilding = false;
+            animator.SetBool("Moving", true);
+        }
+        Vector3 moveDir = (movetarget - transform.position).normalized;
+        if (Vector3.Distance(movetarget, transform.position) < 1f) // if within 1m of destination
+        {
+            animator.SetBool("Moving", false);
+            isMoving = false;
+            gameObject.GetComponent<UnitBehaviour>().OrderComplete();
 
+        }
+        else
+        {
+            Vector3 moveDistance = moveDir * gameObject.GetComponent<UnitBehaviour>().moveSpeed * updateTimestep;
+            transform.forward = moveDir;
+            moveDistance = new Vector3(moveDistance.x, 0, moveDistance.z);
+            transform.position += moveDistance;
+        }
+    }
     // Update is called once per frame
 
 }

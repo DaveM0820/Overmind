@@ -86,17 +86,6 @@ public class CameraControls : MonoBehaviour
     {
         if (assumingDirectControl == false)
         {          
-            virtualLeftCursorPositionDelta = virtualLeftCursor.transform.position - LeftCursor.transform.position;
-            virtualRightCursorPositionDelta = virtualRightCursor.transform.position - RightCursor.transform.position;
-
-            virtualLeftCursorVelocity += virtualLeftCursorPositionDelta;
-            virtualRightCursorVelocity += virtualRightCursorPositionDelta;
-
-            virtualLeftCursorVelocity *= 0.1f;
-            virtualRightCursorVelocity *= 0.1f;
-
-            virtualLeftCursor.transform.position += virtualLeftCursorVelocity;
-            virtualRightCursor.transform.position += virtualRightCursorVelocity;
             
             rightGripValue = RightGripActionRefrence.action.ReadValue<float>();//get current value of grip button
             leftGripValue = LeftGripActionRefrence.action.ReadValue<float>();//get current value of grip button
@@ -143,8 +132,6 @@ public class CameraControls : MonoBehaviour
 
                 if (initialBothPositionsSet == false)
                 {
-                    Vector3 initialVirtualRightCursorPosition = virtualLeftCursor.transform.position;
-                    Vector3 initialVirtualLeftCursorPosition = virtualRightCursor.transform.position;
 
                     initialRightCursorPosition = RightCursor.transform.position;
                     initialLeftCursorPosition = LeftCursor.transform.position;
@@ -152,17 +139,18 @@ public class CameraControls : MonoBehaviour
                     initialDistance = Vector3.Distance(initialLeftCursorPosition, initialRightCursorPosition);
                     initialPlayerPosition = transform.position;
                     initialHeight = transform.position.y;
-                    initialBothPositionsSet = true;
                     initialAngle = Mathf.Atan2(LeftCursor.transform.position.x - RightCursor.transform.position.x, LeftCursor.transform.position.z - RightCursor.transform.position.z) * Mathf.Rad2Deg;
+                    initialBothPositionsSet = true;
+
 
                 }
                 currentMidPoint = (LeftCursor.transform.position + RightCursor.transform.position) / 2;
                 Vector3 positionDelta = initialMidPoint - currentMidPoint;
-                positionDelta.y = 0;
-                transform.position += positionDelta * panSpeed;
+                panVelocity += positionDelta * panSpeed;
+                panVelocity *= panSmoothing;
                 currentDistance = Vector3.Distance(LeftCursor.transform.position, RightCursor.transform.position);
                 deltaDistance = initialDistance - currentDistance;
-                newHeight = initialHeight + deltaDistance;
+                newHeight = initialHeight + (deltaDistance*zoomSpeed);
                 if (newHeight > maxHeight)
                 {
                     newHeight = maxHeight;
@@ -172,7 +160,7 @@ public class CameraControls : MonoBehaviour
                     newHeight = minHeight;
                 }
                 float deltaHeight = transform.position.y - newHeight;
-                zoomVelocity -= zoomSpeed * deltaHeight;
+                zoomVelocity -= deltaHeight;
                 zoomVelocity *= zoomSmoothing;
                 float newAngle = 45f + (40f * ((transform.position.y - minHeight) / (maxHeight - minHeight)));
                 if (newAngle > 89f)
@@ -181,16 +169,21 @@ public class CameraControls : MonoBehaviour
 
                 }
                 currentAngle = Mathf.Atan2(LeftCursor.transform.position.x - RightCursor.transform.position.x, LeftCursor.transform.position.z - RightCursor.transform.position.z) * Mathf.Rad2Deg;
-                deltaAngle = currentAngle - initialAngle;    
-                transform.rotation = Quaternion.Euler(newAngle, transform.localEulerAngles.y, transform.localEulerAngles.z);
-                initialAngle += currentAngle * rotateSmoothing;
-                angleToRotate += deltaAngle * rotateSpeed;
-               // Debug.Log("deltaAngle = " + deltaAngle);
-                initialAngle = currentAngle;
-     
-               transform.RotateAround(currentMidPoint, Vector3.up, -angleToRotate);
 
-                transform.position = new Vector3(transform.position.x, transform.position.y + zoomVelocity, transform.position.z);
+                deltaAngle = initialAngle - currentAngle;    
+                transform.rotation = Quaternion.Euler(newAngle, transform.localEulerAngles.y, transform.localEulerAngles.z);
+                angleToRotate = deltaAngle * rotateSpeed;
+
+               // angleToRotate *= initialAngle - currentAngle;
+            
+               transform.RotateAround(initialMidPoint, Vector3.up, angleToRotate);
+               
+               initialAngle = currentAngle;
+                //transform.position += panVelocity;
+                transform.position = new Vector3(transform.position.x + panVelocity.x, transform.position.y + zoomVelocity, transform.position.z + panVelocity.z);
+
+                // transform.RotateAround(initialMidPoint, Vector3.up, deltaAngle);
+
                 float newFogDensity = maxFog - (maxFog * (transform.position.y/maxHeight));
                 if (newFogDensity < 0.00015f)
                 {
