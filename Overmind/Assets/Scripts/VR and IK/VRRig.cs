@@ -22,7 +22,8 @@ public class VRRig : MonoBehaviour
     public InputActionReference rightJoystick = null;
     public Vector2 leftJoystickValue;
     public Vector2 rightJoystickValue;
-
+    public InputActionReference SelectActionRefrence = null;
+    float ButtonValue;
     private Animator animator;
 
     public Vector3 velocity;
@@ -80,9 +81,15 @@ public class VRRig : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        leftJoystickValue = leftJoystick.action.ReadValue<Vector2>();
+        ButtonValue = SelectActionRefrence.action.ReadValue<float>();
+
+        if (ButtonValue == 1) //if the a button is pressed
+        {
+            Debug.Log("vrTargetLeftHand " + vrTargetLeftHand.position + " vrTargetRightHand " + vrTargetRightHand.position);
+        }
+            leftJoystickValue = leftJoystick.action.ReadValue<Vector2>();
         rightJoystickValue = rightJoystick.action.ReadValue<Vector2>();
-        velocity += transform.rotation * new Vector3(leftJoystickValue.x,0, leftJoystickValue.y) * this.GetComponent<UnitBehaviour>().moveSpeed * Time.deltaTime * 0.1f;
+        velocity += transform.rotation * new Vector3(leftJoystickValue.x,0, leftJoystickValue.y) * this.GetComponent<UnitBehaviour>().moveSpeed * Time.deltaTime * 0.2f;
         velocity *= dampening;
         transform.position += velocity;
         if (rightJoystickValue.x < -0.5)
@@ -122,10 +129,10 @@ public class VRRig : MonoBehaviour
         animator.SetFloat("X", leftJoystickValue.x);
         animator.SetFloat("Y", leftJoystickValue.y);
         player.transform.position = new Vector3(transform.position.x, player.transform.position.y , transform.position.z);
-        rigTargetLeftHand.position = vrTargetLeftHand.position;// TransformPoint(0, 0, 0);
+        rigTargetLeftHand.position =  vrTargetLeftHand.position;// TransformPoint(0, 0, 0);
         rigTargetRightHand.position = vrTargetRightHand.position;// TransformPoint(0,0,0);
-        rigTargetLeftHand.rotation = vrTargetLeftHand.rotation;
-        rigTargetRightHand.rotation = vrTargetRightHand.rotation;
+        rigTargetLeftHand.eulerAngles = vrTargetLeftHand.eulerAngles;
+        rigTargetRightHand.eulerAngles = vrTargetRightHand.eulerAngles;
         
     }
 

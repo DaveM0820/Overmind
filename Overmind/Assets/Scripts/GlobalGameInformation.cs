@@ -13,11 +13,10 @@ public class GlobalGameInformation : MonoBehaviour
     public int numberOfUnitsBuilt;
     public int numberOfPlayers;
     public List<int> playerResources;
+    public List<int> resourcesPerMin;
     public List<int> playerScore;
     public int startingResources;
     public int player;
-    public int barracksCost;
-    public int builderCost;
     void Start()
     {
         updateTimestep = 1 / updateFPS;
@@ -27,6 +26,8 @@ public class GlobalGameInformation : MonoBehaviour
         while (count < numberOfPlayers)
         {
             playerResources.Add(startingResources);
+            resourcesPerMin.Add(0);
+
             playerScore.Add(0);
 
             count++;

@@ -36,6 +36,12 @@ public class CameraControls : MonoBehaviour
     private bool initialRightPositionsSet;
     private bool initialLeftPositionsSet;
     private bool initialBothPositionsSet;
+    public GameObject unitBeingControlled;
+    public int cameraBoundTop;
+    public int cameraBoundBottom;
+    public int cameraBoundLeft;
+    public int cameraBoundRight;
+
 
     float currentDistance;
     float deltaDistance;
@@ -57,12 +63,11 @@ public class CameraControls : MonoBehaviour
     float angleToRotate;
     float angleVelocity;
 
-    GameObject virtualLeftCursor;
-    GameObject virtualRightCursor;
-    Vector3 virtualLeftCursorVelocity;
-    Vector3 virtualRightCursorVelocity;
-    Vector3 virtualRightCursorPositionDelta;
-    Vector3 virtualLeftCursorPositionDelta;
+    public InputActionReference leftJoystick = null;
+    public InputActionReference rightJoystick = null;
+    private Vector2 leftJoystickValue;
+    private Vector2 rightJoystickValue;
+
 
     // Start is called before the first frame update
     private void Start()
@@ -74,10 +79,6 @@ public class CameraControls : MonoBehaviour
         player = GameObject.Find("/XR Rig");
         RightCursor = GameObject.Find("/UI/RightCursor");
         LeftCursor = GameObject.Find("/UI/LeftCursor");
-        virtualLeftCursor = Instantiate(RightCursor);
-       virtualRightCursor = Instantiate(LeftCursor);
-            virtualLeftCursorVelocity = new Vector3(0,0,0);
-        virtualRightCursorVelocity = new Vector3(0, 0, 0);
     }
 
 
@@ -102,7 +103,9 @@ public class CameraControls : MonoBehaviour
                 positionDelta.y = 0;
                 panVelocity += positionDelta * panSpeed;
                 panVelocity *= panSmoothing;
+                if (transform.position.x + panVelocity.x > cameraBoundLeft && transform.position.x + panVelocity.x < cameraBoundRight && transform.position.z + panVelocity.z > cameraBoundBottom && transform.position.z + panVelocity.z < cameraBoundTop) { 
                 transform.position += panVelocity;
+                }
             }
             else
             {
@@ -121,7 +124,10 @@ public class CameraControls : MonoBehaviour
                 positionDelta.y = 0;
                 panVelocity += positionDelta * panSpeed;
                 panVelocity *= panSmoothing;
-                transform.position += panVelocity;
+                if (transform.position.x + panVelocity.x > cameraBoundLeft && transform.position.x + panVelocity.x < cameraBoundRight && transform.position.z + panVelocity.z > cameraBoundBottom && transform.position.z + panVelocity.z < cameraBoundTop)
+                {
+                    transform.position += panVelocity;
+                }
             }
             else
             {
@@ -162,7 +168,7 @@ public class CameraControls : MonoBehaviour
                 float deltaHeight = transform.position.y - newHeight;
                 zoomVelocity -= deltaHeight;
                 zoomVelocity *= zoomSmoothing;
-                float newAngle = 45f + (40f * ((transform.position.y - minHeight) / (maxHeight - minHeight)));
+                float newAngle = (40f * ((transform.position.y - minHeight) / (maxHeight - minHeight)));
                 if (newAngle > 89f)
                 {
                     newAngle = 89f;
@@ -180,28 +186,36 @@ public class CameraControls : MonoBehaviour
                
                initialAngle = currentAngle;
                 //transform.position += panVelocity;
-                transform.position = new Vector3(transform.position.x + panVelocity.x, transform.position.y + zoomVelocity, transform.position.z + panVelocity.z);
+                if (transform.position.x + panVelocity.x > cameraBoundLeft && transform.position.x + panVelocity.x < cameraBoundRight && transform.position.z + panVelocity.z > cameraBoundBottom && transform.position.z + panVelocity.z < cameraBoundTop)
+                {
+                    transform.position += panVelocity;
+                }
+                transform.position = new Vector3(transform.position.x, transform.position.y + zoomVelocity, transform.position.z);
 
                 // transform.RotateAround(initialMidPoint, Vector3.up, deltaAngle);
 
-                float newFogDensity = maxFog - (maxFog * (transform.position.y/maxHeight));
-                if (newFogDensity < 0.00015f)
+                float newFogDensity = maxFog - (maxFog * (transform.position.y/(maxHeight)));
+                if (newFogDensity < 0.00005f)
                 {
-                    newFogDensity = 0.00015f;
+                    newFogDensity = 0.00005f;
                 }
-                if (newFogDensity > 0.002f)
+                if (newFogDensity > maxFog)
                 {
-                    newFogDensity = 0.002f;
+                    newFogDensity = maxFog;
                 }
+                RenderSettings.fogDensity = newFogDensity;
+
             }
             else
             {
                 initialBothPositionsSet = false;
             }
 
+            leftJoystickValue = leftJoystick.action.ReadValue<Vector2>();
+            rightJoystickValue = rightJoystick.action.ReadValue<Vector2>();
+            transform.position += new Vector3(leftJoystickValue.x, rightJoystickValue.y, leftJoystickValue.y) * panSpeed * transform.position.y * 0.01f;
+
         }
-
-
 
     }
 

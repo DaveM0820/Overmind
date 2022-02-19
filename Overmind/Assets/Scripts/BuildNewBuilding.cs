@@ -9,6 +9,9 @@ public class BuildNewBuilding : MonoBehaviour
     public InputActionReference triggerActionRefrence = null;
     private float triggerValue;
     public Button buildBarracks;
+    public Button buildRefinery;
+    public Button buildHQ;
+    public Button buildTurret;
     public bool placing = false;
     private GameObject player;
     private int playerNumber;
@@ -20,11 +23,19 @@ public class BuildNewBuilding : MonoBehaviour
     Transform scaffold;
     public bool buildingCollision;
     public int buildingsbuilt;
+    public GameObject barracksPrefab;
+    public GameObject refineryPrefab;
+    public GameObject hqPrefab;
+    public GameObject turretPrefab;
 
 
     void Start()
     {
         buildBarracks.onClick.AddListener(BuildBarracks);
+        buildRefinery.onClick.AddListener(BuildRefinery);
+        buildHQ.onClick.AddListener(BuildHQ);
+        buildTurret.onClick.AddListener(BuildTurret);
+
         RightCursor = GameObject.Find("/UI/RightCursor");
         player = GameObject.Find("/XR Rig");
         buildings = GameObject.Find("/World/Buildings");
@@ -36,29 +47,101 @@ public class BuildNewBuilding : MonoBehaviour
     void BuildBarracks()
     {
         resources = player.GetComponent<GlobalGameInformation>().playerResources[playerNumber];
-        GameObject barracksOrgin = GameObject.Find("/World/Buildings/Barracks");
-        buildingCost = player.GetComponent<GlobalGameInformation>().barracksCost;
+        buildingCost = barracksPrefab.GetComponent<UnitBehaviour>().cost;
         if (placing == false && resources > buildingCost) {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(barracksOrgin, buildings.transform);
-            objectToPlace.GetComponent<BuildingBehaviour>().maxScaffoldHeight = 11;
+            objectToPlace = Instantiate(barracksPrefab, buildings.transform);
             objectToPlace.GetComponent<BuildingBehaviour>().name = "Barracks " + buildingsbuilt;
-            objectToPlace.GetComponent<BuildingBehaviour>().placed = false;
-            objectToPlace.GetComponent<BuildingBehaviour>().built = false;
-            objectToPlace.GetComponent<BuildingBehaviour>().buidlingDimensions = new Vector2(20,20);
-            objectToPlace.GetComponent<UnitBehaviour>().hpMax = 1000;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
-            objectToPlace.GetComponent<UnitBehaviour>().unitType = "Barracks";
             objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
-
+            objectToPlace.GetComponent<BuildingBehaviour>().scaffold = objectToPlace.transform.Find("Scaffold");
+            objectToPlace.GetComponent<BuildingBehaviour>().hp = 1;
+            objectToPlace.GetComponent<BuildingBehaviour>().hpMax = objectToPlace.GetComponent<UnitBehaviour>().hpMax;
             objectToPlace.GetComponent<BuildingBehaviour>().UpdateScaffold();
             player.GetComponent<UnitCommand>().placingBuilding = true;
             placing = true;
+            player.GetComponent<GlobalGameInformation>().playerResources[playerNumber] -= buildingCost;
+
         }
- 
+
     }
-        // Update is called once per frame
-        void Update()
+    void BuildRefinery() {
+        resources = player.GetComponent<GlobalGameInformation>().playerResources[playerNumber];
+        buildingCost = refineryPrefab.GetComponent<UnitBehaviour>().cost;
+        if (placing == false && resources > buildingCost)
+        {
+            buildingsbuilt += 1;
+            objectToPlace = Instantiate(refineryPrefab, buildings.transform);
+
+            objectToPlace.GetComponent<BuildingBehaviour>().name = "Refinery  " + buildingsbuilt;
+            objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
+
+            objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
+            player.GetComponent<UnitCommand>().placingBuilding = true;
+
+            buildingCollision = true;
+
+            objectToPlace.transform.Find("Scaffold/Valid").gameObject.SetActive(false);
+            objectToPlace.transform.Find("Scaffold/Invalid").gameObject.SetActive(true);
+
+            placing = true;
+            objectToPlace.GetComponent<BuildingBehaviour>().scaffold = objectToPlace.transform.Find("Scaffold");
+            objectToPlace.GetComponent<BuildingBehaviour>().hp = 1;
+            objectToPlace.GetComponent<BuildingBehaviour>().hpMax = objectToPlace.GetComponent<UnitBehaviour>().hpMax;
+            objectToPlace.GetComponent<BuildingBehaviour>().UpdateScaffold();
+
+            player.GetComponent<GlobalGameInformation>().playerResources[playerNumber] -= buildingCost;
+
+
+        }
+
+    }
+    void BuildHQ() {
+        resources = player.GetComponent<GlobalGameInformation>().playerResources[playerNumber];
+        buildingCost = hqPrefab.GetComponent<UnitBehaviour>().cost;
+        if (placing == false && resources > buildingCost)
+        {
+            buildingsbuilt += 1;
+            objectToPlace = Instantiate(hqPrefab, buildings.transform);
+            objectToPlace.GetComponent<BuildingBehaviour>().name = "HQ " + buildingsbuilt;
+            objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
+            objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
+            objectToPlace.GetComponent<BuildingBehaviour>().scaffold = objectToPlace.transform.Find("Scaffold");
+            objectToPlace.GetComponent<BuildingBehaviour>().hp = 1;
+            objectToPlace.GetComponent<BuildingBehaviour>().hpMax = objectToPlace.GetComponent<UnitBehaviour>().hpMax;
+            objectToPlace.GetComponent<BuildingBehaviour>().UpdateScaffold();
+
+            player.GetComponent<UnitCommand>().placingBuilding = true;
+            placing = true;
+            player.GetComponent<GlobalGameInformation>().playerResources[playerNumber] -= buildingCost;
+
+        }
+
+    }
+    void BuildTurret() {
+        resources = player.GetComponent<GlobalGameInformation>().playerResources[playerNumber];
+        buildingCost = turretPrefab.GetComponent<UnitBehaviour>().cost;
+        if (placing == false && resources > buildingCost)
+        {
+            buildingsbuilt += 1;
+            objectToPlace = Instantiate(turretPrefab, buildings.transform);
+            objectToPlace.GetComponent<BuildingBehaviour>().name = "Turret  " + buildingsbuilt;
+            objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
+            objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
+            objectToPlace.GetComponent<BuildingBehaviour>().scaffold = objectToPlace.transform.Find("Scaffold");
+            objectToPlace.GetComponent<BuildingBehaviour>().hp = 1;
+            objectToPlace.GetComponent<BuildingBehaviour>().hpMax = objectToPlace.GetComponent<UnitBehaviour>().hpMax;
+            objectToPlace.GetComponent<BuildingBehaviour>().UpdateScaffold();
+            player.GetComponent<UnitCommand>().placingBuilding = true;
+
+            placing = true;
+            player.GetComponent<GlobalGameInformation>().playerResources[playerNumber] -= buildingCost;
+
+        }
+
+    }
+    // Update is called once per frame
+    void Update()
     {
         if (placing == true)
         {
@@ -74,22 +157,23 @@ public class BuildNewBuilding : MonoBehaviour
             objectToPlace.transform.position = roundedPlacement;
             if (triggerValue == 1 && buildingCollision == false)
             {
+
                 player.GetComponent<UnitCommand>().placingBuilding = false;
                 player.GetComponent<UnitCommand>().GiveBuildOrder(objectToPlace);
                 objectToPlace.GetComponent<BuildingBehaviour>().placed = true;
                 player.GetComponent<GlobalGameInformation>().playerResources[playerNumber] -= buildingCost;
                 placing = false;
+                Order updateScaffold = new Order("updateScaffold");
+                objectToPlace.GetComponent<UnitBehaviour>().addOrderToQueue(updateScaffold);
                 RaycastHit rightRaycastHit;
                 RaycastHit leftRaycastHit;
                 RaycastHit topRaycastHit;
                 RaycastHit bottomRaycastHit;
-                Debug.Log("BuildNewBuilding about to send raycasts to check sides");
 
                 Physics.Raycast(objectToPlace.transform.position + new Vector3(objectToPlace.GetComponent<BuildingBehaviour>().buidlingDimensions.x + 5, 40, 0), Vector3.down, out rightRaycastHit, 30);
                 Physics.Raycast(objectToPlace.transform.position + new Vector3(-objectToPlace.GetComponent<BuildingBehaviour>().buidlingDimensions.x - 5, 40, 0), Vector3.down, out leftRaycastHit, 30);
                 Physics.Raycast(objectToPlace.transform.position + new Vector3(0, 40, objectToPlace.GetComponent<BuildingBehaviour>().buidlingDimensions.y + 5), Vector3.down, out topRaycastHit, 30);
                 Physics.Raycast(objectToPlace.transform.position + new Vector3(0, 40, -objectToPlace.GetComponent<BuildingBehaviour>().buidlingDimensions.y - 5), Vector3.down, out bottomRaycastHit, 30);
-                Debug.Log("BuildNewBuilding just sent raycasts to check sides");
 
                 if (rightRaycastHit.point.y > objectToPlace.transform.position.y+3 || rightRaycastHit.transform.gameObject.layer == 7)
                 {

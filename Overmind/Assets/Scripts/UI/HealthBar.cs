@@ -38,7 +38,7 @@ public class HealthBar : MonoBehaviour
         unit = transform.parent.parent.gameObject;
         hp = unit.GetComponent<UnitBehaviour>().hp;
         hpMax = unit.GetComponent<UnitBehaviour>().hpMax;
-        hpPercent = hp / hpMax;
+        hpPercent = (float)hp / (float)hpMax;
              greenBar.localScale = new Vector3(hpPercent, greenBar.localScale.y, greenBar.localScale.z);
         blackBar.localScale = new Vector3(1- hpPercent, blackBar.localScale.y, blackBar.localScale.z);
 

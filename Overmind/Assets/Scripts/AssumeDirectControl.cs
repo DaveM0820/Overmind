@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.XR.Interaction.Toolkit;
 
 public class AssumeDirectControl : MonoBehaviour
 {
@@ -14,7 +15,7 @@ public class AssumeDirectControl : MonoBehaviour
 
     private Vector3 targetPlayerPosition;
     private float targetPlayerSize;
-    private Vector3 targetPlayerRotation;
+    private Quaternion targetPlayerRotation;
     private float cameraZoomSpeed;
     private GameObject selectedUnit;
     private GameObject player;
@@ -24,11 +25,15 @@ public class AssumeDirectControl : MonoBehaviour
     private float targetCameraSize;
     private float cameraSizeDelta;
     private float decreaseCameraSizeAmount;
-
+    private float updateTimestep;
+    public GameObject cameraObject;
+    Camera myCamera;
+    UnitBehaviour selectedUnitBehaviour;
     void Start()
     {
         assumeDirectControlButton.onClick.AddListener(AssumeDirectControlInitalize);
         cameraZoomSpeed = 2f;
+        myCamera = cameraObject.GetComponent<Camera>();
 
 
     }
@@ -36,85 +41,102 @@ public class AssumeDirectControl : MonoBehaviour
     void AssumeDirectControlInitalize()
     {
         var volume = GameObject.Find("Post Processing").GetComponent<Volume>();
-
         selectedUnit = Select.SelectedUnits[0];
+        selectedUnitBehaviour = selectedUnit.GetComponent<UnitBehaviour>();
         player = GameObject.Find("/XR Rig");
         player.GetComponent<CameraControls>().OvermindCamPosition = player.transform.position;
         player.GetComponent<CameraControls>().OvermindCamRotation = player.transform.localEulerAngles;
         player.GetComponent<CameraControls>().OvermindCamScale = player.transform.localScale.x;
-        targetCameraSize = selectedUnit.GetComponent<UnitBehaviour>().cameraSizeWhenUnderDirectControl;
+        player.GetComponent<CameraControls>().unitBeingControlled = selectedUnit;
+        targetCameraSize = selectedUnitBehaviour.cameraSizeWhenUnderDirectControl;
         targetPlayerSize = 1f;
-        targetHeadHeight = selectedUnit.GetComponent<UnitBehaviour>().headHeight;
+        targetHeadHeight = selectedUnit.transform.position.y + selectedUnitBehaviour.headHeight;
         targetPlayerPosition = selectedUnit.transform.position + new Vector3 (0, targetHeadHeight, 0);
-        targetPlayerRotation = selectedUnit.transform.localEulerAngles;
+        targetPlayerRotation = selectedUnit.transform.rotation;
         player.GetComponent<CameraControls>().assumingDirectControl = true;
-        selectedUnit.GetComponent<UnitBehaviour>().assumingDirectControl = true;
-                movingCam = true;
-        if (volume.profile.TryGet<Vignette>(out var vignette))
-        {
-            vignette.intensity.overrideState = true;
-            vignette.intensity.value = 1;
-        }
+        selectedUnitBehaviour.assumingDirectControl = true;
+        selectedUnitBehaviour.addOrderToQueue(new Order("stop"));
+        movingCam = true;
+
     }
     // Update is called once per frame
     void Update()
     {
         if (movingCam == true)
         {
+
+
+            var volume = GameObject.Find("Post Processing").GetComponent<Volume>();
+
             player = GameObject.Find("/XR Rig");
             Vector3 postitionDelta = targetPlayerPosition - player.transform.position;
             Vector3 decresePositionAmount = postitionDelta * cameraZoomSpeed * Time.deltaTime;
             player.transform.position += decresePositionAmount;
 
 
-            Vector3 rotationDelta = targetPlayerRotation - player.transform.localEulerAngles;
-            Vector3 correctRotationAmount = rotationDelta * cameraZoomSpeed * Time.deltaTime*0.01f;
-            player.transform.rotation = Quaternion.Euler(correctRotationAmount);
+            player.transform.rotation = Quaternion.Slerp(player.transform.rotation, targetPlayerRotation, 0.02f);
+                
+                
             float sizeDelta = player.transform.localScale.x - targetPlayerSize;
             float decreaseSizeAmount = sizeDelta * cameraZoomSpeed * Time.deltaTime;
             player.transform.localScale -= new Vector3(decreaseSizeAmount, decreaseSizeAmount, decreaseSizeAmount);
+             if (volume.profile.TryGet<Vignette>(out var vignette))
+             {
+                 if (vignette.smoothness.value < 1) {
+                        vignette.smoothness.value += 0.01f;
+                 }
+                 if (vignette.intensity.value < 2) 
+                 {
 
-
-            if (postitionDelta.y < 0.02f && postitionDelta.x < 0.02f && postitionDelta.z < 0.02f)
+                     vignette.intensity.value += 0.01f;
+                 }
+             }
+            if (postitionDelta.y > -0.1f)
               {
-
-                Debug.Log("Done moving");
-                GameObject overmindLeftHand = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/OvermindLeftHand");
-                GameObject overmindRightHand = GameObject.Find("/XR Rig/Camera Offset/RightHand Controller/OvermindRightHand");
-                overmindLeftHand.SetActive(false);
-                overmindRightHand.SetActive(false);
-              //  GameObject leftHand = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller");
-             //   GameObject rightHand = GameObject.Find("/XR Rig/Camera Offset/RightHand Controller");
-              //  leftHand.GetComponent<LineRenderer>().enabled = false;
-              //  rightHand.GetComponent<LineRenderer>().enabled = false;
-
-                player.GetComponent<Select>().SwitchLeftHandUIScreen("DirectControlScreen");
-                player.transform.localScale = new Vector3(targetPlayerSize, targetPlayerSize, targetPlayerSize);
-                player.transform.localEulerAngles = targetPlayerRotation;
-                player.transform.position = targetPlayerPosition;
-                selectedUnit.GetComponent<VRRig>().enabled = true;
-                selectedUnit.GetComponent<UnitBehaviour>().Deselect();
                 movingCam = false;
-                var volume = GameObject.Find("Post Processing").GetComponent<Volume>();
+                player.GetComponent<CameraControls>().assumingDirectControl = true;
 
-                if (volume.profile.TryGet<Vignette>(out var vignette))
+                myCamera.nearClipPlane = 0.05f;
+                myCamera.farClipPlane = 30000;
+                GameObject leftHand = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller");
+                  GameObject rightHand = GameObject.Find("/XR Rig/Camera Offset/RightHand Controller");
+                // leftHand.GetComponent<XRInteractorLineVisual>().enabled = false;
+                 //rightHand.GetComponent<XRInteractorLineVisual>().enabled = false;
+                //GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/DirectControlScreen").SetActive(true);
+                player.transform.localScale = new Vector3(targetPlayerSize, targetPlayerSize, targetPlayerSize);
+                player.transform.rotation = targetPlayerRotation;
+                player.transform.position = targetPlayerPosition;
+                GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/OvermindLeftHand").SetActive(false);
+                GameObject.Find("/XR Rig/Camera Offset/RightHand Controller/OvermindRightHand").SetActive(false);
+                selectedUnitBehaviour.Deselect();
+                if (selectedUnitBehaviour.unitType == "Builder")
+                {
+                    GameObject.Find("/XR Rig/Camera Offset/Main Camera/Builder Helmet").SetActive(true);
+                }
+                if (volume.profile.TryGet<Vignette>(out vignette))
                 {
                     vignette.intensity.overrideState = true;
-                    vignette.intensity.value = 0.9f;
+                    vignette.intensity.value = 0.70f;
+                    vignette.smoothness.value = 0.6f;
                 }
                 if (volume.profile.TryGet<ColorAdjustments>(out var colorAdjustments))
                 {
+                    colorAdjustments.hueShift.overrideState = true;
+                    colorAdjustments.postExposure.overrideState = true;
                     colorAdjustments.hueShift.value = -10;
                     colorAdjustments.saturation.value = -50;
-                    colorAdjustments.postExposure.value = 0.2f;
+                    colorAdjustments.postExposure.value = 0.3f;
 
                 }
                 if (volume.profile.TryGet<FilmGrain>(out var filmGrain))
                 {
                     filmGrain.active = true;
                     filmGrain.intensity.overrideState = true;
-                    filmGrain.intensity.value = 0.5f;
+                    filmGrain.intensity.value = 0.6f;
                 }
+                selectedUnitBehaviour.addOrderToQueue(new Order("enterDirectControl"));
+
+
             }
         }
     }

@@ -14,38 +14,89 @@ public class LefthandUIBuilding : MonoBehaviour
     public List<Button> unitIconButton;
     int unitIconsPlaced;
     Image buildingIconImage;
-    GameObject buildingIconGameObject;
-    public GameObject buildingImage;
+    public GameObject buildingIconGameObject;
     GameObject unitIconGameObject;
     Image unitIconImage;
-
+    int buttonpresses;
+    public GameObject builderPrefab;
+    public GameObject panel2;
+    public GameObject BarracksScreen;
+    public GameObject HQScreen;
+    public GameObject RefineryScreen;
+    public GameObject TurretScreen;
+    public GameObject BuildingQueue;
+    GameObject unitqueueViewport;
+        GameObject unitIcon;
+        GameObject buildprogress;
+    GameObject healthbar;
+    GameObject player;
     void Start()
     {
+        buttonpresses = 0;
+        buildBuilder.onClick.AddListener(BuildBuilder);
 
 
+        unitqueueViewport = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel2/BuildingQueue/Viewport/Content");
+        unitIcon = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel2/BuildingQueue/Viewport/Content/UnitIcon");
+        buildprogress = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel2/BuildingQueue/Viewport/Content/UnitIcon/UnitName/BuildProgress");
     }
     private void OnEnable()
     {
-        UpdateUnitQueueDisplay();
-                buildBuilder.onClick.AddListener(BuildBuilder);
+        selectedUnits = Select.SelectedUnits;
+
+        Debug.Log("Building display 1");
+        foreach (Transform child in panel2.transform)
+        {
+            child.gameObject.SetActive(false);
+        }
+        BuildingQueue.SetActive(false);
+        Debug.Log("Building display 2");
+
+        buildingIconGameObject.GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().unitIcon;
+        Debug.Log("Building display 2.5");
+
+        BuildingSelected.text = selectedUnits[0].GetComponent<UnitBehaviour>().unitType;
+        Debug.Log("Building display 3");
+
+        if (selectedUnits[0].GetComponent<UnitBehaviour>().unitType == "Barracks")
+        {
+            BarracksScreen.SetActive(true);
+            BuildingQueue.SetActive(true);
+            UpdateUnitQueueDisplay();
+
+        }
+        else if (selectedUnits[0].GetComponent<UnitBehaviour>().unitType == "HQ")
+        {
+            HQScreen.SetActive(true);
+            BuildingQueue.SetActive(true);
+            UpdateUnitQueueDisplay();
+
+        }
+        else if (selectedUnits[0].GetComponent<UnitBehaviour>().unitType == "Refinery")
+        {
+            RefineryScreen.SetActive(true);
+
+        }
+        else if (selectedUnits[0].GetComponent<UnitBehaviour>().unitType == "Turret")
+        {
+            TurretScreen.SetActive(true);
+
+        }
+        Debug.Log("Building display 4");
+
+        if (selectedUnits.Count == 1)
+        {
+            UpdateUnitQueueDisplay();
+        }
+        Debug.Log("Building display 5");
 
     }
     public void UpdateUnitQueueDisplay()
     {
+
         unitIcons = new List<GameObject>();
         //Image unitImage;
         //unitImages = new List<Image>();
-        selectedUnits = Select.SelectedUnits;
-
-        buildingIconGameObject = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel/BuildingIcon");
-        buildingIconImage = buildingIconGameObject.GetComponent<Image>();
-        buildingIconImage.sprite = selectedUnits[0].GetComponent<UnitBehaviour>().unitIcon;
-
-        BuildingSelected = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel/BuildingType").GetComponent<Text>();
-        BuildingSelected.text = selectedUnits[0].GetComponent<UnitBehaviour>().unitType;
-
-        GameObject unitqueueViewport = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel/BuildingQueue/Viewport/Content");
-        GameObject unitIcon = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel/BuildingQueue/Viewport/Content/UnitIcon");
 
         foreach (Transform child in unitqueueViewport.transform)
         {
@@ -57,13 +108,9 @@ public class LefthandUIBuilding : MonoBehaviour
                 GameObject.Destroy(child.gameObject);
             }
         }
-        GameObject buildprogress = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel/BuildingQueue/Viewport/Content/UnitIcon/UnitName/BuildProgress");
         buildprogress.transform.localScale = new Vector3(0, buildprogress.transform.localScale.y, buildprogress.transform.localScale.z);
         if (selectedUnits.Count == 1)
         {
-            Debug.Log("Lefthandbuildingui Total in order Queue to display = " + selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue.Count);
-            Debug.Log("Lefthandbuildingui Did it find unitIcon? : " + unitIcon.name);
-
             Text unitNameText;
             unitIconsPlaced = 0;
             while (unitIconsPlaced < selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue.Count)
@@ -74,6 +121,7 @@ public class LefthandUIBuilding : MonoBehaviour
 
                     unitIcons.Add(unitIcon);
                     unitIcon.SetActive(true);
+                 //   Debug.Log("palcing first building unit icon");
 
                     float newX = unitIcon.transform.localPosition.x + (unitIconsPlaced * 55);
                     unitIcons[unitIconsPlaced].transform.localPosition = new Vector3(newX, unitIcon.transform.localPosition.y, unitIcon.transform.localPosition.z);
@@ -81,25 +129,33 @@ public class LefthandUIBuilding : MonoBehaviour
                     unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
                   //  unitImage = unitIcons[unitIconsPlaced].transform.Find("Image").gameObject.GetComponent<Image>();
                    // unitImage.sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
-                    unitImages.Add(unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>());
+                   // unitImages.Add(unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>());
                     unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
+             //       Debug.Log("placed  first building unit icon");
 
                 }
                 else
                 {
+                 //   Debug.Log("about to placed a new uniticon in the building screen");
 
                     unitIcons.Add(Instantiate(unitIcon, unitIcon.transform.parent));
+                 //   Debug.Log("total unit icons in list = " + unitIcons.Count);
+                   // Debug.Log("current one tryin to modify =" + unitIconsPlaced);
+
                     unitIcons[unitIconsPlaced].SetActive(true);
                     unitIcons[unitIconsPlaced].transform.localPosition = new Vector3(unitIcon.transform.localPosition.x + (unitIconsPlaced * 55), unitIcon.transform.localPosition.y, unitIcon.transform.localPosition.z);
                     unitIcons[unitIconsPlaced].name = "unitIcon" + unitIconsPlaced;
                    unitNameText = unitIcons[unitIconsPlaced].transform.Find("UnitName").GetComponent<Text>();
                     unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
-                    Debug.Log("Placed a new uniticon in the building screen");
-                    // unitImage = unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>();
+                    unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
+
+                 //   Debug.Log("Placed a new uniticon in the building screen");
+                     //unitImage = unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>();
                    // unitImage.sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
-                   // unitImages.Add(unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>());
+                    //unitImages.Add(unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>());
                     //unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
                 }
+                unitIconsPlaced++;
 
                 //Debug.Log("Lefthandbuilding str name = " + name);
 
@@ -113,7 +169,6 @@ public class LefthandUIBuilding : MonoBehaviour
                 // unitIconButton[unitIconsPlaced] = unitIcons[unitIconsPlaced].GetComponent<Button>();
                 // unitIconButton[unitIconsPlaced].onClick.AddListener(delegate { CancelBuildOrder(unitIconsPlaced); });
                 // Debug.Log("Lefthandbuilding ui count = " + unitIconsPlaced);
-                unitIconsPlaced++;
 
 
             }
@@ -131,15 +186,26 @@ public class LefthandUIBuilding : MonoBehaviour
     }
     public void BuildBuilder()
     {
-        GameObject buildTarget = GameObject.Find("/World/Units/Builder");
-        Order buildorder = new Order("buildunit", buildTarget, false);
-        selectedUnits[0].GetComponent<UnitBehaviour>().addOrderToQueue(buildorder);
-        UpdateUnitQueueDisplay();
+        if (selectedUnits.Count == 1)
+        {
+            if (selectedUnits[0].GetComponent<BuildingBehaviour>().built == true)
+            {
+                player = GameObject.Find("/XR Rig");
+
+                GameObject buildTarget = builderPrefab;
+                player.GetComponent<GlobalGameInformation>().playerResources[player.GetComponent<GlobalGameInformation>().player] -= buildTarget.GetComponent<UnitBehaviour>().cost;
+
+                Order buildorder = new Order("build", buildTarget, false);
+                selectedUnits[0].GetComponent<UnitBehaviour>().addOrderToQueue(buildorder);
+                buttonpresses += 1;
+                UpdateUnitQueueDisplay();
+
+
+            }
+        }
+   
     }
 
     // Update is called once per frame
-    void Update()
-    {
-        
-    }
+
 }

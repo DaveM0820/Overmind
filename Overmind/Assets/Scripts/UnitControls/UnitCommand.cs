@@ -17,9 +17,9 @@ public class UnitCommand : MonoBehaviour
     private GameObject rightArmPosition;
     private RaycastHit rightRaycastHit;
     public bool placingBuilding;
-    private bool issuingOrders;
-    private string currentOrderType;
-    private int unitsOrdered;
+    bool issuingOrders;
+    string currentOrderType;
+    int unitsOrdered;
     GameObject orderTarget;
     Vector3 orderLocation;
     GameObject player;
@@ -29,6 +29,7 @@ public class UnitCommand : MonoBehaviour
 
     void start()
     {
+
         builderUnitScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuilderUnitScreen");
         orderIssuedFromButtonPress = false;
         selectedUnits = Select.SelectedUnits;
@@ -124,8 +125,9 @@ public class UnitCommand : MonoBehaviour
                 if (unitsOrdered == 0) { // f no one has been ordered yet generate the list of positions to send them
                     getMovePositions(orderLocation);
                 }
-
+                if (selectedUnits[unitsOrdered].GetComponent<UnitBehaviour>().isBuilding == false) { 
                 GiveOneDirectMoveOrder(selectedUnits[unitsOrdered], targetPositionList[unitsOrdered]);
+                }
                 unitsOrdered++;
             }
             if (currentOrderType == "collect")
@@ -160,9 +162,12 @@ public class UnitCommand : MonoBehaviour
 
         if (rightRaycastHit.collider.gameObject.layer == 6) // if player issued order on on ground, move units to that point
         {
-            if (placingBuilding == false) {
+            if (placingBuilding == false)
+            {
                 //  Debug.Log("placingBuilding == false");
+                if (player.GetComponent<Select>().hasMilitaryunits == true || player.GetComponent<Select>().hasBuilderUnits == true) { 
                 GiveMoveOrder(rightRaycastHit.point);
+                }
             }
             else
             {
