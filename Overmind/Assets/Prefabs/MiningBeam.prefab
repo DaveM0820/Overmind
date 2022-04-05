@@ -55,5 +55,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8422348135367921663, guid: a5e6d95609f03344eb8ce9c8d5d288ef, type: 3}
+      propertyPath: moveWithTransform
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8422348135367921663, guid: a5e6d95609f03344eb8ce9c8d5d288ef, type: 3}
+      propertyPath: InitialModule.maxNumParticles
+      value: 20
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a5e6d95609f03344eb8ce9c8d5d288ef, type: 3}

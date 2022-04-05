@@ -59,7 +59,7 @@ public class CursorChange : MonoBehaviour
             }
             else if (collider.gameObject.transform.parent.name == "Buildings")
             {
-                if (collider.gameObject.GetComponent<UnitBehaviour>().owner == player.GetComponent<GlobalGameInformation>().player)
+                if (collider.gameObject.GetComponent<UnitBehaviour>().faction == player.GetComponent<GlobalGameInformation>().player)
                 {
                     target = "assist";
                 }

@@ -32,11 +32,10 @@ public class ScaffoldCollision : MonoBehaviour
             {
                 isRefinery = true;
             }
-            if (collider.transform.parent != null)
-            {
+     
                 if (isRefinery)
                 {
-                    if (collider.transform.parent.name == "Resources" || collider.transform.parent.parent.gameObject.name == "Resources")
+                    if (collider.gameObject.layer == 8)
                     {
                         if (collider.transform.gameObject.name != transform.parent.gameObject.name)
                         {
@@ -53,7 +52,7 @@ public class ScaffoldCollision : MonoBehaviour
                         }
                     }
                 }
-                if (collider.transform.parent.name == "Buildings" || collider.transform.parent.parent.gameObject.name == "Buildings")
+                if (collider.gameObject.layer == 7)
                 {
 
 
@@ -63,7 +62,7 @@ public class ScaffoldCollision : MonoBehaviour
                     }
                 }
 
-            }
+       
             else
             {
                 this.GetComponent<ScaffoldCollision>().enabled = false;
@@ -87,7 +86,7 @@ public class ScaffoldCollision : MonoBehaviour
                 }
 
             }
-            else if(buildingcollision == true)
+            else if (buildingcollision == true)
             {
                 builderUnitScreen.GetComponent<BuildNewBuilding>().buildingCollision = true;
                 valid.gameObject.SetActive(false);
@@ -96,8 +95,7 @@ public class ScaffoldCollision : MonoBehaviour
             }
         }
     }
-    void OnTriggerExit(Collider collider)
-    {
+    void OnTriggerExit(Collider collider) {
         if (parentBuilding.GetComponent<BuildingBehaviour>().placed == false)
         {
 
@@ -105,9 +103,8 @@ public class ScaffoldCollision : MonoBehaviour
             {
                 isRefinery = true;
             }
-            if (collider.transform.parent != null)
-                {
-                if (collider.transform.parent.name == "Buildings" || collider.transform.parent.parent.gameObject.name == "Buildings")
+     
+                if (collider.gameObject.layer == 7)
                 {
                     if (collider.transform.gameObject.name != transform.parent.gameObject.name)
                     {
@@ -115,10 +112,10 @@ public class ScaffoldCollision : MonoBehaviour
                     }
 
                 }
-                    }
+         
             if (isRefinery)
             {
-                if (collider.transform.parent.name == "Resources" || collider.transform.parent.parent.gameObject.name == "Resources")
+                if (collider.gameObject.layer == 8)
                 {
                     if (collider.transform.gameObject.name != transform.parent.gameObject.name)
                     {
@@ -127,31 +124,31 @@ public class ScaffoldCollision : MonoBehaviour
                 }
 
             }
-                if (isRefinery)
-                {
-                    if (isatresource && buildingcollision == false)
-                    {
-                        builderUnitScreen.GetComponent<BuildNewBuilding>().buildingCollision = false;
-                        valid.gameObject.SetActive(true);
-                        invalid.gameObject.SetActive(false);
-
-                    }
-                    else
-                    {
-                        builderUnitScreen.GetComponent<BuildNewBuilding>().buildingCollision = true;
-                        valid.gameObject.SetActive(false);
-                        invalid.gameObject.SetActive(true);
-
-                    }
-
-                }
-                else if (buildingcollision == false)
+            if (isRefinery)
+            {
+                if (isatresource && buildingcollision == false)
                 {
                     builderUnitScreen.GetComponent<BuildNewBuilding>().buildingCollision = false;
                     valid.gameObject.SetActive(true);
                     invalid.gameObject.SetActive(false);
 
                 }
+                else
+                {
+                    builderUnitScreen.GetComponent<BuildNewBuilding>().buildingCollision = true;
+                    valid.gameObject.SetActive(false);
+                    invalid.gameObject.SetActive(true);
+
+                }
+
             }
+            else if (buildingcollision == false)
+            {
+                builderUnitScreen.GetComponent<BuildNewBuilding>().buildingCollision = false;
+                valid.gameObject.SetActive(true);
+                invalid.gameObject.SetActive(false);
+
+            }
+        }
     }
 }

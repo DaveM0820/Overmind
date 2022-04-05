@@ -194,7 +194,7 @@ public class UnitCommand : MonoBehaviour
                 {
                     //  Debug.Log("hit is on building");
 
-                    if (rightRaycastHit.collider.gameObject.GetComponent<UnitBehaviour>().owner == player.GetComponent<GlobalGameInformation>().player)
+                    if (rightRaycastHit.collider.gameObject.GetComponent<UnitBehaviour>().faction == player.GetComponent<GlobalGameInformation>().player)
                     {
                         // Debug.Log("owner is player");
 

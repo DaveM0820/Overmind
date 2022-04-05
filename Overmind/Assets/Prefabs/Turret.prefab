@@ -907,6 +907,7 @@ MonoBehaviour:
   cost: 250
   hpMax: 1000
   hp: 1000
+  military: 1
   hpPercent: 100
   unitType: Turret
   unitBuildTime: 0
@@ -917,10 +918,12 @@ MonoBehaviour:
   headHeight: 0
   moveType: 
   moveSpeed: 0
-  turnSpeed: 0
-  acceleration: 0
   updateTimestep: 0
   unitIcon: {fileID: 21300000, guid: a051e3a04a45fd544b43c4bd2ef7e041, type: 3}
+  queueIsEmpty: 1
+  hpChange: 0
+  nearFarRangeBoundry: 0
+  checkRangeCounterMax: 0
 --- !u!114 &1678037739743372347
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -934,10 +937,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   buildableUnits: []
+  scaffold: {fileID: 0}
   maxScaffoldHeight: 11
   scaffoldHeight: 0
   placed: 0
   built: 0
+  hp: 0
+  hpMax: 0
   rallyPoint: {x: 0, y: 0, z: 0}
   CreationPoint: {x: 0, y: 0, z: 0}
   unitBuildTime: 0
@@ -952,6 +958,7 @@ MonoBehaviour:
   oreLocation: {x: 0, y: 0, z: 0}
   buidlingDimensions: {x: 10, y: 10}
   text: {fileID: 0}
+  explosion: {fileID: 0}
 --- !u!135 &1678037739743372346
 SphereCollider:
   m_ObjectHideFlags: 0

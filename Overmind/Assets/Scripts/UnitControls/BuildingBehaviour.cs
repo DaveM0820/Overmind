@@ -38,7 +38,8 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
     GameObject BuildingScreen;
     UnitBehaviour buldingUnitBehaviour;
     Vector3 walkoutpoint;
-    GameObject units;
+    public GameObject explosion;
+    GameObject explosionCopy;
     void Start() {
         unitBuildProgress = 0;
         unitBuildTime = 0;
@@ -50,7 +51,6 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
         buldingUnitBehaviour = gameObject.GetComponent<UnitBehaviour>();
         walkoutpoint = transform.position;
         player = GameObject.Find("/XR Rig");
-        units = GameObject.Find("/World/Units");
     }
 
     public void Move(Vector3 location) {
@@ -62,11 +62,41 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
     public void Stop() {
 
     }
+    public void Damage() {
+
+
+    }
     public void EnterDirectControl() {
     }
     public void ExitDirectControl() {
     }
     public void UnderDirectControl() {
+    }
+    public void CollisionEnter(Collider collision) {
+
+    }
+    public void CollisionExit(Collider collision) {
+
+
+    }
+    public void CollisionStay(Collider collision) {
+
+    }
+    public void Die() {
+        Debug.Log("should die");
+        Invoke("Destroy", 4);
+        Debug.Log("should die2");
+
+        explosionCopy = Instantiate(explosion, transform.root);
+        Debug.Log("should die3");
+
+        explosionCopy.GetComponent<ParticleSystem>().Play();
+        Debug.Log("should die4");
+
+
+    }
+    void Destroy() {
+        GameObject.Destroy(gameObject);
     }
     public void ExtractOre() {
 
@@ -116,9 +146,10 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
             {
                 player.GetComponent<GlobalGameInformation>().numberOfUnitsBuilt += 1;
 
-            GameObject newUnit = Instantiate(unit, units.transform);
+            GameObject newUnit = Instantiate(unit, transform.root);
+            newUnit.gameObject.layer = 9;
                 UnitBehaviour newUnitBehavior = newUnit.GetComponent<UnitBehaviour>();
-                newUnitBehavior.owner = player.GetComponent<GlobalGameInformation>().player;
+                newUnitBehavior.faction = player.GetComponent<GlobalGameInformation>().player;
 
             newUnit.name = unit.name + player.GetComponent<GlobalGameInformation>().numberOfUnitsBuilt;
 

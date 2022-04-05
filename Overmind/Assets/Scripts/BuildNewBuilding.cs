@@ -19,7 +19,6 @@ public class BuildNewBuilding : MonoBehaviour
     private int buildingCost;
     GameObject RightCursor;
     GameObject objectToPlace;
-    GameObject buildings;
     Transform scaffold;
     public bool buildingCollision;
     public int buildingsbuilt;
@@ -38,7 +37,6 @@ public class BuildNewBuilding : MonoBehaviour
 
         RightCursor = GameObject.Find("/UI/RightCursor");
         player = GameObject.Find("/XR Rig");
-        buildings = GameObject.Find("/World/Buildings");
         playerNumber = player.GetComponent<GlobalGameInformation>().player;
         placing = false;
         buildingCollision = false;
@@ -50,10 +48,11 @@ public class BuildNewBuilding : MonoBehaviour
         buildingCost = barracksPrefab.GetComponent<UnitBehaviour>().cost;
         if (placing == false && resources > buildingCost) {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(barracksPrefab, buildings.transform);
+            objectToPlace = Instantiate(barracksPrefab, transform.root);
+            objectToPlace.layer = 7;
             objectToPlace.GetComponent<BuildingBehaviour>().name = "Barracks " + buildingsbuilt;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
-            objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
+            objectToPlace.GetComponent<UnitBehaviour>().faction = player.GetComponent<GlobalGameInformation>().player;
             objectToPlace.GetComponent<BuildingBehaviour>().scaffold = objectToPlace.transform.Find("Scaffold");
             objectToPlace.GetComponent<BuildingBehaviour>().hp = 1;
             objectToPlace.GetComponent<BuildingBehaviour>().hpMax = objectToPlace.GetComponent<UnitBehaviour>().hpMax;
@@ -71,12 +70,13 @@ public class BuildNewBuilding : MonoBehaviour
         if (placing == false && resources > buildingCost)
         {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(refineryPrefab, buildings.transform);
+            objectToPlace = Instantiate(refineryPrefab, transform.root);
+            objectToPlace.layer = 7;
 
             objectToPlace.GetComponent<BuildingBehaviour>().name = "Refinery  " + buildingsbuilt;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
 
-            objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
+            objectToPlace.GetComponent<UnitBehaviour>().faction = player.GetComponent<GlobalGameInformation>().player;
             player.GetComponent<UnitCommand>().placingBuilding = true;
 
             buildingCollision = true;
@@ -102,10 +102,12 @@ public class BuildNewBuilding : MonoBehaviour
         if (placing == false && resources > buildingCost)
         {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(hqPrefab, buildings.transform);
+            objectToPlace = Instantiate(hqPrefab, transform.root);
+            objectToPlace.layer = 7;
+
             objectToPlace.GetComponent<BuildingBehaviour>().name = "HQ " + buildingsbuilt;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
-            objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
+            objectToPlace.GetComponent<UnitBehaviour>().faction = player.GetComponent<GlobalGameInformation>().player;
             objectToPlace.GetComponent<BuildingBehaviour>().scaffold = objectToPlace.transform.Find("Scaffold");
             objectToPlace.GetComponent<BuildingBehaviour>().hp = 1;
             objectToPlace.GetComponent<BuildingBehaviour>().hpMax = objectToPlace.GetComponent<UnitBehaviour>().hpMax;
@@ -124,10 +126,11 @@ public class BuildNewBuilding : MonoBehaviour
         if (placing == false && resources > buildingCost)
         {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(turretPrefab, buildings.transform);
+            objectToPlace = Instantiate(turretPrefab, transform.root);
+            objectToPlace.layer = 7;
             objectToPlace.GetComponent<BuildingBehaviour>().name = "Turret  " + buildingsbuilt;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
-            objectToPlace.GetComponent<UnitBehaviour>().owner = player.GetComponent<GlobalGameInformation>().player;
+            objectToPlace.GetComponent<UnitBehaviour>().faction = player.GetComponent<GlobalGameInformation>().player;
             objectToPlace.GetComponent<BuildingBehaviour>().scaffold = objectToPlace.transform.Find("Scaffold");
             objectToPlace.GetComponent<BuildingBehaviour>().hp = 1;
             objectToPlace.GetComponent<BuildingBehaviour>().hpMax = objectToPlace.GetComponent<UnitBehaviour>().hpMax;

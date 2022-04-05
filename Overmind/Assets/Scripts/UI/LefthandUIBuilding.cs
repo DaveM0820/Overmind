@@ -44,19 +44,15 @@ public class LefthandUIBuilding : MonoBehaviour
     {
         selectedUnits = Select.SelectedUnits;
 
-        Debug.Log("Building display 1");
         foreach (Transform child in panel2.transform)
         {
             child.gameObject.SetActive(false);
         }
         BuildingQueue.SetActive(false);
-        Debug.Log("Building display 2");
 
-        buildingIconGameObject.GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().unitIcon;
-        Debug.Log("Building display 2.5");
-
+       // buildingIconGameObject.GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().unitIcon;
+        
         BuildingSelected.text = selectedUnits[0].GetComponent<UnitBehaviour>().unitType;
-        Debug.Log("Building display 3");
 
         if (selectedUnits[0].GetComponent<UnitBehaviour>().unitType == "Barracks")
         {
@@ -82,13 +78,11 @@ public class LefthandUIBuilding : MonoBehaviour
             TurretScreen.SetActive(true);
 
         }
-        Debug.Log("Building display 4");
 
         if (selectedUnits.Count == 1)
         {
             UpdateUnitQueueDisplay();
         }
-        Debug.Log("Building display 5");
 
     }
     public void UpdateUnitQueueDisplay()

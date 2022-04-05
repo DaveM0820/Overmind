@@ -11,12 +11,10 @@ public class LeftHandUIUpdate : MonoBehaviour
     public GameObject player;
     float counter = 0;
     int playernum;
+    GlobalGameInformation globalGameInformation;
     public void UpdateOreDisplay() {
-        Debug.Log("player resources:");
-        Debug.Log(player.GetComponent<GlobalGameInformation>().playerResources[playernum]);
-        Debug.Log("player resource rate:");
-        Debug.Log(player.GetComponent<GlobalGameInformation>().resourcesPerMin[playernum]);
-        oreDisplayText.text = "Ore: " + player.GetComponent<GlobalGameInformation>().playerResources[playernum] + "(" + player.GetComponent<GlobalGameInformation>().resourcesPerMin[playernum] + "/min)";
+
+        oreDisplayText.text = "Ore: " + globalGameInformation.playerResources[playernum] + "(" + globalGameInformation.resourcesPerMin[playernum] + "/min)";
 
 
     }
@@ -24,7 +22,8 @@ public class LeftHandUIUpdate : MonoBehaviour
     {
         oreDisplayText = oreDisplay.GetComponent<Text>();
         player = GameObject.Find("/XR Rig");
-        playernum = player.GetComponent<GlobalGameInformation>().player;
+        globalGameInformation = player.GetComponent<GlobalGameInformation>();
+        playernum = globalGameInformation.player;
     }
 
     // Update is called once per frame

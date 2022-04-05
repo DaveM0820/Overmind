@@ -15,14 +15,23 @@ public class GlobalGameInformation : MonoBehaviour
     public List<int> playerResources;
     public List<int> resourcesPerMin;
     public List<int> playerScore;
+    public List<Material> factionMaterial;
+    public List<Unit>[] unitList = new List<Unit>[8];
     public int startingResources;
     public int player;
-    void Start()
+    public int checkRangeCounterMax;
+    void Awake()
     {
+        for (int i = 0; i < 8; i++)
+
+        {
+        unitList[i] = new List<Unit>();
+        
+        }
         updateTimestep = 1 / updateFPS;
         buildingUpdateTimestep = 1 / buildingUpdateFPS;
         numberOfUnitsBuilt = 0;
-        int count = 0;
+         int count = 0;
         while (count < numberOfPlayers)
         {
             playerResources.Add(startingResources);
@@ -32,9 +41,22 @@ public class GlobalGameInformation : MonoBehaviour
 
             count++;
         }
-
-
     }
-    
+
+}
+public class Unit
+{
+    public GameObject gameObject;
+    public int faction;
+    public bool military;
+    public Vector3 position;
+
+    public Unit(int faction, GameObject gameObject, bool military, Vector3 position) {
+        this.gameObject = gameObject;
+        this.faction = faction;
+        this.military = military;
+        this.position = position;
+
+     }
 
 }

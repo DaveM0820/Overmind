@@ -59,34 +59,22 @@ public class BuilderUnitBehaviour : MonoBehaviour, IUnitActionInterface
     RaycastHit rightHit;
     Vector3 beamHit;
     Vector3 beamHit2;
+    GameObject sparks;
+    GameObject sparks2;
     // Start is called before the first frame update
     void Start() {
         player = GameObject.Find("/XR Rig");
         builderBeam = transform.Find("BuilderBeam");
+
         updateTimestep = player.GetComponent<GlobalGameInformation>().updateTimestep;
         unitBehaviour = gameObject.GetComponent<UnitBehaviour>(); 
         currentlyBuilding = false;
         builderBeam.transform.localScale = new Vector3(0,0,0);
-        builderBeam.gameObject.SetActive(false);
         animator = transform.Find("LOD0").gameObject.GetComponent<Animator>();
         builderBeam2 = Instantiate(builderBeam.gameObject);
         isBuilding = false;
         isMoving = false;
         //vr stuff
-
-    }
-    public void Attack(GameObject target) {
-    
-    
-    }
-    public void BuildUnit(GameObject unit) {
-    }
-     public void ExtractOre() {
-    }
-    public void UpdateScaffold() {
-    }
-    public void EnterDirectControl() {
-        Stop(); 
         vrTargetLeftHand = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/VRTargetLeftHand").transform;
         vrTargetRightHand = GameObject.Find("/XR Rig/Camera Offset/RightHand Controller/VRTargetRightHand").transform;
         rightHand = GameObject.Find("/XR Rig/Camera Offset/RightHand Controller").transform;
@@ -98,64 +86,113 @@ public class BuilderUnitBehaviour : MonoBehaviour, IUnitActionInterface
         rigTargetneck = transform.Find("LOD0/Armature/Root/Spine1/Spine2/Neck");
         headConstraint = transform.Find("LOD0/VR Constraints/Head Constraint");
         helmet = GameObject.Find("/XR Rig/Camera Offset/Main Camera/Builder Helmet");
-        Debug.Log("enter direct control builder");
+        player = GameObject.Find("/XR Rig");
+        sparks = builderBeam.Find("LOD0/SparksEffect").gameObject;
+        sparks2 = builderBeam2.transform.Find("LOD0/SparksEffect").gameObject;
+    }
+    public void Attack(GameObject target) {
+    
+    
+    }
+    public void BuildUnit(GameObject unit) {
+    }
+     public void ExtractOre() {
+    }
+    public void Damage() {
+
+
+    }
+    public void UpdateScaffold() {
+    }
+    public void CollisionEnter(Collider collision) {
+
+    }
+    public void CollisionExit(Collider collision) {
+
+
+    }
+    public void Die() {
+    }
+    public void CollisionStay(Collider collision) {
+        if (collision.gameObject.layer == 7)
+        {
+            transform.position -= (collision.gameObject.transform.position - transform.position).normalized;
+            velocity *= 0.2f;
+        }
+    }
+    public void EnterDirectControl() {
+        Stop(); 
 
         animator.SetBool("DirectControl", true);
         snappedRight = false;
         snappedLeft = false;
         helmet.SetActive(true);
-        Debug.Log("enter direct control builder2");
 
         unitMeshAndRig.GetComponent<RigBuilder>().enabled = true;
         rigTargetneck.localScale = new Vector3(0, 0, 0); // make head dissappear
-        player = GameObject.Find("/XR Rig");
-        Debug.Log("enter direct control builder3");
 
-        player.transform.position = rigTargetHead.position;
+        player.transform.position = rigTargetHead.position + new Vector3(0,0.3f,0);
         animator = unitMeshAndRig.GetComponent<Animator>();
-        GetComponent<UnitBehaviour>().OrderComplete();
-        Debug.Log("enter direct control builder4");
 
         gameObject.GetComponent<UnitBehaviour>().assumingDirectControl = true;
+        gameObject.GetComponent<UnitCollision>().enabled = true;
+        builderBeam.gameObject.SetActive(true);
+        builderBeam2.gameObject.SetActive(true);
+        sparks.gameObject.SetActive(true);
+        sparks2.gameObject.SetActive(true);
+        GetComponent<UnitBehaviour>().OrderComplete();
 
     }
     public void ExitDirectControl() {
 
         animator.SetBool("DirectControl", false);
+        gameObject.GetComponent<UnitCollision>().enabled = false;
 
         helmet.SetActive(false);
         unitMeshAndRig.GetComponent<RigBuilder>().enabled = false;
         gameObject.GetComponent<UnitBehaviour>().assumingDirectControl = false;
 
         rigTargetneck.localScale = new Vector3(1, 1, 1);
+        builderBeam.gameObject.SetActive(false);
+        builderBeam2.gameObject.SetActive(false);
         unitBehaviour.OrderComplete();
 
     }
     public void UnderDirectControl() {
         Debug.Log("enter direct control builder5");
 
+
+        player.transform.position = rigTargetneck.position + new Vector3(0, 0.5f, 0);
         leftJoystickValue = leftJoystick.action.ReadValue<Vector2>();
         rightJoystickValue = rightJoystick.action.ReadValue<Vector2>();
         rightTriggerValue = rightTrigger.action.ReadValue<float>();
         leftTriggerValue = leftTrigger.action.ReadValue<float>();
+
+        rigTargetLeftHand.position = vrTargetLeftHand.position + new Vector3 (0,-0.2f,0);// TransformPoint(0, 0, 0);
+        rigTargetRightHand.position = vrTargetRightHand.position + new Vector3(0, -0.2f, 0);// TransformPoint(0,0,0);
+
+        rigTargetLeftHand.rotation = vrTargetLeftHand.rotation;
+        rigTargetRightHand.rotation = vrTargetRightHand.rotation;
+        player.transform.position = new Vector3(transform.position.x, rigTargetneck.position.y + 0.3f, transform.position.z);
         if (rightTriggerValue > 0.5f) //shoot beam from right hand 
         {
 
+            builderBeam.transform.localScale = new Vector3(1, 1, 1);
+
             Physics.Raycast(rightHand.position + rightHand.forward, rightHand.forward, out rightHit, 500, LayerMask.GetMask("Buildings", "Units", "Ground"));
-            //Debug.Log("right hand position " + vrTargetRightHand.position + "right hand direction " + vrTargetRightHand.forward);
-            builderBeam.gameObject.SetActive(true);
-            if (rightHit.point == null)
+            builderBeam.transform.position = rightHand.position + (rightHand.forward * 0.25f);
+            builderBeam.transform.forward = rightHand.forward;
+            builderBeam.transform.localScale = new Vector3(1, 1, 1);
+            if (rightHit.collider == null)
             {
-                builderBeam.transform.position = rightHand.position + (rightHand.forward*0.5f);
-                builderBeam.transform.forward = rightHand.forward;
-                builderBeam.transform.localScale = new Vector3(1, 1, 100);
+
+                builderBeam.transform.localScale = new Vector3(1, 1, 200);
             }
             else
             {
+                sparks.gameObject.SetActive(true);
 
                 beamHit = rightHit.point;
-                builderBeam.transform.position = rightHand.position + (rightHand.forward * 0.5f);
-                builderBeam.LookAt(beamHit, Vector3.up);
                 float beamLength = Vector3.Distance(rightHand.position, beamHit);
                 builderBeam.localScale = new Vector3(1, 1, beamLength);
                 rightBeamRecharge += Time.deltaTime;
@@ -165,24 +202,27 @@ public class BuilderUnitBehaviour : MonoBehaviour, IUnitActionInterface
         else
         {
             rightBeamRecharge = 0;
-            builderBeam.gameObject.SetActive(false);
+            builderBeam.transform.localScale = new Vector3(0, 0, 0);
+            sparks.gameObject.SetActive(false);
 
         }
         if (leftTriggerValue > 0.5f) //shoot beam from left hand 
         {
-            builderBeam2.gameObject.SetActive(true);
+
+            builderBeam2.transform.localScale = new Vector3(1, 1, 1);
             Physics.Raycast(leftHand.position + leftHand.forward, leftHand.forward, out leftHit, 500, LayerMask.GetMask("Buildings", "Units", "Ground"));
-            if (leftHit.point == null)
+            builderBeam2.transform.position = leftHand.position + (leftHand.forward * 0.25f);
+            builderBeam2.transform.forward = leftHand.forward;
+            if (leftHit.collider == null)
             {
-                builderBeam2.transform.position = leftHand.position + (leftHand.forward * 0.5f);
-                builderBeam2.transform.forward = leftHand.forward;
-                builderBeam2.transform.localScale = new Vector3(1, 1, 100);
+              
+                builderBeam2.transform.localScale = new Vector3(1, 1, 200);
             }
             else
             {
-            beamHit2 = leftHit.point;
-            builderBeam2.transform.position = leftHand.position + (leftHand.forward * 0.5f);
-            builderBeam2.transform.LookAt(beamHit2, Vector3.up);
+                sparks2.gameObject.SetActive(true);
+
+                beamHit2 = leftHit.point;
             float beamLength = Vector3.Distance(rightHand.position, beamHit2);
             builderBeam2.transform.localScale = new Vector3(1, 1, beamLength);
             }
@@ -192,14 +232,15 @@ public class BuilderUnitBehaviour : MonoBehaviour, IUnitActionInterface
         else
         {
             leftBeamRecharge = 0;
+            sparks2.gameObject.SetActive(false);
 
-            builderBeam2.gameObject.SetActive(false);
+            builderBeam2.transform.localScale = new Vector3(0,0,0);
 
         }
         if (rightBeamRecharge > buildRate/2)
         {
             UnitBehaviour objecthitGameObject = rightHit.collider.gameObject.GetComponent<UnitBehaviour>();
-            if (objecthitGameObject.owner == unitBehaviour.owner)
+            if (objecthitGameObject.faction == unitBehaviour.faction)
             {
                 objecthitGameObject.changeHP((int)buildStrength);
                 GameObject newText = Instantiate(text);
@@ -217,7 +258,7 @@ public class BuilderUnitBehaviour : MonoBehaviour, IUnitActionInterface
         if (leftBeamRecharge > buildRate/2)
         {
             UnitBehaviour objecthitGameObject = leftHit.collider.gameObject.GetComponent<UnitBehaviour>();
-            if (objecthitGameObject.owner == unitBehaviour.owner)
+            if (objecthitGameObject.faction == unitBehaviour.faction)
             {
                 objecthitGameObject.changeHP((int)buildStrength);
                 GameObject newText = Instantiate(text);
@@ -274,12 +315,7 @@ public class BuilderUnitBehaviour : MonoBehaviour, IUnitActionInterface
         animator.SetFloat("X", leftJoystickValue.x);
         animator.SetFloat("Y", leftJoystickValue.y);
 
-        rigTargetLeftHand.position = vrTargetLeftHand.position;// TransformPoint(0, 0, 0);
-        rigTargetRightHand.position = vrTargetRightHand.position;// TransformPoint(0,0,0);
- 
-        rigTargetLeftHand.eulerAngles = vrTargetLeftHand.eulerAngles;
-        rigTargetRightHand.eulerAngles = vrTargetRightHand.eulerAngles;
-        player.transform.position = new Vector3(transform.position.x, rigTargetneck.position.y, transform.position.z);
+
 
 
     }
@@ -317,9 +353,7 @@ public class BuilderUnitBehaviour : MonoBehaviour, IUnitActionInterface
                 builderBeam.localScale = new Vector3(1, 1, beamLength);
                 buildingUnitBehaviour.hp += buildStrength;
                 reloadProgress = 0;
-               // GameObject newText = Instantiate(text);
-                //newText.GetComponent<TextMesh>().text = "+ " + buildStrength + "HP"; 
-                //newText.transform.position = beamHit;
+
             }
             else
             {
