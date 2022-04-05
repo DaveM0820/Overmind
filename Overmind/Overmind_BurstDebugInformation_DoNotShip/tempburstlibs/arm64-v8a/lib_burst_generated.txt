@@ -92,7 +92,7 @@ Library: lib_burst_generated
 --compilation-defines=ENABLE_UNITYADS_RUNTIME
 --compilation-defines=UNITY_UNITYADS_API
 --compilation-defines=ENABLE_MONO
---compilation-defines=NET_4_6
+--compilation-defines=NET_STANDARD_2_0
 --compilation-defines=ENABLE_CUSTOM_RENDER_TEXTURE
 --compilation-defines=ENABLE_DIRECTOR
 --compilation-defines=ENABLE_LOCALIZATION
@@ -100,7 +100,7 @@ Library: lib_burst_generated
 --compilation-defines=ENABLE_TERRAIN
 --compilation-defines=ENABLE_TILEMAP
 --compilation-defines=ENABLE_TIMELINE
---compilation-defines=ENABLE_LEGACY_INPUT_MANAGER
+--compilation-defines=ENABLE_INPUT_SYSTEM
 --compilation-defines=UNITY_POST_PROCESSING_STACK_V2
 --compilation-defines=INPUT_SYSTEM_1_1_OR_NEWER
 --compilation-defines=LIH_PRESENT_V2API
