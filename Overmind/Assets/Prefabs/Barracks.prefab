@@ -94,6 +94,7 @@ GameObject:
   - component: {fileID: 9133088334577175110}
   - component: {fileID: 9133088332495379239}
   - component: {fileID: 5028338231704716076}
+  - component: {fileID: 77349070281111797}
   m_Layer: 7
   m_Name: Barracks
   m_TagString: Untagged
@@ -131,11 +132,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 185a12367c8e66e4ca708af825def020, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackMoveEnabled: 0
+  attackWhileMoving: 0
   selected: 0
-  owner: 0
+  faction: 0
   cost: 1000
   hpMax: 10000
   hp: 10000
+  military: 0
   hpPercent: 100
   unitType: Barracks
   unitBuildTime: 0
@@ -144,12 +148,14 @@ MonoBehaviour:
   cameraSizeWhenUnderDirectControl: 0
   assumingDirectControl: 0
   headHeight: 0
-  moveType: 
   moveSpeed: 0
   updateTimestep: 0
   unitIcon: {fileID: 21300000, guid: a051e3a04a45fd544b43c4bd2ef7e041, type: 3}
   queueIsEmpty: 1
   hpChange: 0
+  LookForTargetsCounterMax: 0
+  currentTarget: {fileID: 0}
+  evading: 0
 --- !u!114 &9133088334577175110
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -211,6 +217,34 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 25, y: 25, z: 25}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &77349070281111797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9133088332495379236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bee0a6fa1f5d4f4db481219040523c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+  graphMask:
+    value: -1
+  type: 0
+  mesh: {fileID: 0}
+  rectangleSize: {x: 30, y: 30}
+  circleRadius: 1
+  circleResolution: 6
+  height: 5
+  meshScale: 1
+  center: {x: 0, y: 0, z: 0}
+  updateDistance: 0.4
+  isDual: 0
+  cutsAddedGeom: 1
+  updateRotationDistance: 10
+  useRotationAndScale: 0
 --- !u!1 &9133088332511555598
 GameObject:
   m_ObjectHideFlags: 0
@@ -5812,15 +5846,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: fb98c59db5f557e42917111512376ab7, type: 3}
       propertyPath: m_LocalScale.x
-      value: 25
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: fb98c59db5f557e42917111512376ab7, type: 3}
       propertyPath: m_LocalScale.y
-      value: 25
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: fb98c59db5f557e42917111512376ab7, type: 3}
       propertyPath: m_LocalScale.z
-      value: 25
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: fb98c59db5f557e42917111512376ab7, type: 3}
       propertyPath: m_LocalPosition.x

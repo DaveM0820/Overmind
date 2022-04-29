@@ -15,7 +15,7 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
     public int hp;
     public int hpMax;
     private float hpPercent;
-    private float elapsed;
+    private float elapsed = 0;
     public Vector3 rallyPoint;
     public Vector3 CreationPoint;
     private float unitBuildProgress;
@@ -40,27 +40,144 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
     Vector3 walkoutpoint;
     public GameObject explosion;
     GameObject explosionCopy;
+    public Transform turret;
+    public Transform gun;
+    public GameObject muzzleflash;
+    public float turretRotationSpeed;
+    UnitBehaviour unitBehaviour;
+    JobManager jobManager;
+    float currentGunCharge = 0;
+    public float reloadtime;
+    GameObject currentTarget;
+    public bool hasTurret;
+    float updateTimestep = 0.5f;
+    int currentOrder = 0;
+    int LookForTargetsCounter = 0;
+    int LookForTargetsCounterMax = 20;
+    Unit thisUnit;
+    int unitRange;
+    int turretNumber;
+    float recharge = 0;
+    public float rechargeTime;
+    public ParticleSystem muzzleFlash;
+    public bool canShoot;
+    void Update() // updates every updateTimeStep, initally set by updateFPS in GlobalGameInformation. This way the framerate of units can be increased or decreased depending on current performance.
+   {
+        // and there are orders in the orderQueue
+
+
+        elapsed += Time.deltaTime;
+
+        if (elapsed >= updateTimestep) //run the order every updateTimestep using the UpdateUnit method
+        {
+            elapsed = 0;
+            switch (currentOrder)
+            {
+                case 1:
+                //Move(currentMoveTarget);
+                break;
+                case 2:
+                Build(currentTarget);
+                break;
+                case 3:
+                LookForTargetsCounter++;
+                Attack(currentTarget);
+                break;
+                case 4:
+                Stop();
+                break;
+                case 5:
+                ExtractOre();
+                break;
+                case 6:
+                UpdateScaffold();
+                break;
+                case 7:
+                EnterDirectControl();
+                break;
+                case 8:
+                ExitDirectControl();
+                break;
+                case 9:
+                UnderDirectControl();
+                break;
+                case 0:
+                LookForTargetsCounter++;
+
+                break;
+                default:
+                LookForTargetsCounter++;
+                currentOrder = 0;
+                break;
+            }
+            if (hasTurret)
+            {
+                if (LookForTargetsCounter > LookForTargetsCounterMax)
+                {
+                jobManager.LookForTarget(thisUnit, unitRange);
+
+                }
+            
+            }
+        }
+    }
+
     void Start() {
+
         unitBuildProgress = 0;
         unitBuildTime = 0;
         rallyPoint = new Vector3(transform.position.x, transform.position.y, transform.position.z - 10);
         buildprogress = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen/Panel2/BuildingQueue/Viewport/Content/UnitIcon/UnitName/BuildProgress");
         player = GameObject.Find("/XR Rig");
+
         gameInformation = player.GetComponent<GlobalGameInformation>();
         BuildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
         buldingUnitBehaviour = gameObject.GetComponent<UnitBehaviour>();
         walkoutpoint = transform.position;
-        player = GameObject.Find("/XR Rig");
+
+        jobManager = player.GetComponent<JobManager>();
+        jobManager.AddTurretToMove(gameObject, turret, gun, turretRotationSpeed);
+        unitBehaviour = gameObject.GetComponent<UnitBehaviour>();
+
+        unitRange = unitBehaviour.unitRange;
+
+        thisUnit = unitBehaviour.thisUnit;
+
+
+        turretNumber = unitBehaviour.turretNumber;
     }
 
     public void Move(Vector3 location) {
 
     }
-    public void Attack(GameObject Target) {
+    public void Attack(GameObject target) {
+        if (currentTarget != target)
+        {
+            currentTarget = target;
+            jobManager.MoveTurret(turretNumber, target.transform);
+
+            currentOrder = 3;
+        }
+   
+            recharge += updateTimestep;
+
+            if (recharge > rechargeTime)
+            {
+            if (unitBehaviour.canFire)
+            {
+                muzzleFlash.Play();
+
+
+            }
+        }
 
     }
-    public void Stop() {
 
+    public void Stop() {
+  
+        currentOrder = 0;
+
+      //  unitBehaviour.OrderComplete();
     }
     public void Damage() {
 
@@ -83,15 +200,11 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
 
     }
     public void Die() {
-        Debug.Log("should die");
         Invoke("Destroy", 4);
-        Debug.Log("should die2");
 
         explosionCopy = Instantiate(explosion, transform.root);
-        Debug.Log("should die3");
 
         explosionCopy.GetComponent<ParticleSystem>().Play();
-        Debug.Log("should die4");
 
 
     }
@@ -126,59 +239,59 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
     public void Build(GameObject unit)//build a unit
     {
 
-     
-            if (Select.SelectedUnits[0] == gameObject && Select.SelectedUnits.Count == 1)
-            {
-                GameObject BuildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
-                if (BuildingScreen.activeInHierarchy == true)
-                {
-                    buildprogress.transform.localScale = new Vector3((unitBuildProgress / unitBuildTime), buildprogress.transform.localScale.y, buildprogress.transform.localScale.z);
-                }
 
+        if (Select.SelectedUnits[0] == gameObject && Select.SelectedUnits.Count == 1)
+        {
+            GameObject BuildingScreen = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/LeftHandUI/BuildingScreen");
+            if (BuildingScreen.activeInHierarchy == true)
+            {
+                buildprogress.transform.localScale = new Vector3((unitBuildProgress / unitBuildTime), buildprogress.transform.localScale.y, buildprogress.transform.localScale.z);
             }
 
+        }
 
 
-            unitBuildProgress += GetComponent<UnitBehaviour>().updateTimestep;
-            unitBuildTime = unit.GetComponent<UnitBehaviour>().unitBuildTime;
 
-            if (unitBuildProgress > unitBuildTime)
-            {
-                player.GetComponent<GlobalGameInformation>().numberOfUnitsBuilt += 1;
+        unitBuildProgress += GetComponent<UnitBehaviour>().updateTimestep;
+        unitBuildTime = unit.GetComponent<UnitBehaviour>().unitBuildTime;
+
+        if (unitBuildProgress > unitBuildTime)
+        {
+            player.GetComponent<GlobalGameInformation>().numberOfUnitsBuilt += 1;
 
             GameObject newUnit = Instantiate(unit, transform.root);
             newUnit.gameObject.layer = 9;
-                UnitBehaviour newUnitBehavior = newUnit.GetComponent<UnitBehaviour>();
-                newUnitBehavior.faction = player.GetComponent<GlobalGameInformation>().player;
+            UnitBehaviour newUnitBehavior = newUnit.GetComponent<UnitBehaviour>();
+            newUnitBehavior.faction = player.GetComponent<GlobalGameInformation>().player;
 
             newUnit.name = unit.name + player.GetComponent<GlobalGameInformation>().numberOfUnitsBuilt;
 
 
 
             buldingUnitBehaviour.OrderComplete();
- 
+
 
             unitBuildProgress = 0;
 
-                if (bottomSideClear)
+            if (bottomSideClear)
+            {
+                if (buldingUnitBehaviour.unitType == "HQ")
                 {
-                    if (buldingUnitBehaviour.unitType == "HQ")
-                    {
-                        newUnit.transform.position = transform.position - new Vector3(0, 0, 10);
-                        walkoutpoint = transform.position - new Vector3(0, 0, 20);
+                    newUnit.transform.position = transform.position - new Vector3(0, 0, 10);
+                    walkoutpoint = transform.position - new Vector3(0, 0, 20);
 
-                    }
                 }
+            }
 
 
 
 
-                if (BuildingScreen.activeInHierarchy)
-                {
+            if (BuildingScreen.activeInHierarchy)
+            {
 
-                    BuildingScreen.GetComponent<LefthandUIBuilding>().UpdateUnitQueueDisplay();
-                }
-                newUnitBehavior.addOrderToQueue(new Order("move", walkoutpoint));
+                BuildingScreen.GetComponent<LefthandUIBuilding>().UpdateUnitQueueDisplay();
+            }
+            newUnitBehavior.addOrderToQueue(new Order("move", walkoutpoint));
             newUnitBehavior.Deselect();
 
         }
@@ -228,5 +341,6 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
         }
 
     }
+
 
 }

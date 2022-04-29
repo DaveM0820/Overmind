@@ -51,12 +51,10 @@ public class Unit
     public bool military;
     public Vector3 position;
 
-    public Unit(int faction, GameObject gameObject, bool military, Vector3 position) {
+    public Unit(int faction, GameObject gameObject, bool military) {
         this.gameObject = gameObject;
         this.faction = faction;
         this.military = military;
-        this.position = position;
-
      }
 
 }

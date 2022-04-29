@@ -48,7 +48,7 @@ public class BuildNewBuilding : MonoBehaviour
         buildingCost = barracksPrefab.GetComponent<UnitBehaviour>().cost;
         if (placing == false && resources > buildingCost) {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(barracksPrefab, transform.root);
+            objectToPlace = Instantiate(barracksPrefab);
             objectToPlace.layer = 7;
             objectToPlace.GetComponent<BuildingBehaviour>().name = "Barracks " + buildingsbuilt;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;
@@ -70,7 +70,7 @@ public class BuildNewBuilding : MonoBehaviour
         if (placing == false && resources > buildingCost)
         {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(refineryPrefab, transform.root);
+            objectToPlace = Instantiate(refineryPrefab);
             objectToPlace.layer = 7;
 
             objectToPlace.GetComponent<BuildingBehaviour>().name = "Refinery  " + buildingsbuilt;
@@ -102,7 +102,7 @@ public class BuildNewBuilding : MonoBehaviour
         if (placing == false && resources > buildingCost)
         {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(hqPrefab, transform.root);
+            objectToPlace = Instantiate(hqPrefab);
             objectToPlace.layer = 7;
 
             objectToPlace.GetComponent<BuildingBehaviour>().name = "HQ " + buildingsbuilt;
@@ -126,7 +126,7 @@ public class BuildNewBuilding : MonoBehaviour
         if (placing == false && resources > buildingCost)
         {
             buildingsbuilt += 1;
-            objectToPlace = Instantiate(turretPrefab, transform.root);
+            objectToPlace = Instantiate(turretPrefab);
             objectToPlace.layer = 7;
             objectToPlace.GetComponent<BuildingBehaviour>().name = "Turret  " + buildingsbuilt;
             objectToPlace.GetComponent<UnitBehaviour>().hp = 1;

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Pathfinding;
 
 
 //unit command takes commands from the controls and other scripts (like the buildnewbuilding script), determines exactly what to do with selected units
@@ -50,7 +51,6 @@ public class UnitCommand : MonoBehaviour
     public void GiveBuildOrder(GameObject buildTarget) //gives build order to all selected units
     {
         if (buildTarget.GetComponent<BuildingBehaviour>().built == false) {
-            Debug.Log("GiveBuildOrder just ran");
 
             currentOrderType = "build";
             issuingOrders = true;
@@ -59,7 +59,6 @@ public class UnitCommand : MonoBehaviour
         }
         else
         {
-            Debug.Log("building already built");
 
 
         }
@@ -126,7 +125,7 @@ public class UnitCommand : MonoBehaviour
                     getMovePositions(orderLocation);
                 }
                 if (selectedUnits[unitsOrdered].GetComponent<UnitBehaviour>().isBuilding == false) { 
-                GiveOneDirectMoveOrder(selectedUnits[unitsOrdered], targetPositionList[unitsOrdered]);
+                GiveOneMoveOrder(selectedUnits[unitsOrdered], targetPositionList[unitsOrdered]);
                 }
                 unitsOrdered++;
             }
@@ -143,7 +142,6 @@ public class UnitCommand : MonoBehaviour
 
             if (unitsOrdered == selectedUnits.Count) // if orders have been issued to all selected units then done ordering units 
             {
-                Debug.Log("Done ordering units");
                 unitsOrdered = 0;
                 issuingOrders = false;
             }
@@ -239,55 +237,63 @@ public class UnitCommand : MonoBehaviour
     }
 
 
-    private void GiveOneBuildOrder(GameObject currentUnit, GameObject buildTarget) // gives build order to one unit, runs once a frame until all units have their orders
+    private void GiveOneBuildOrder(GameObject unit, GameObject buildTarget) // gives build order to one unit, runs once a frame until all units have their orders
     {
         int layerMask = 1 << 7;//layer 7 is buildings, bitshift 1 to 7 to return bit value of 7
 
         // first check if the units has a direct path to the building using a raycast which ignores units
-        Vector3 directionToBuilding = (buildTarget.transform.position - currentUnit.transform.position).normalized;
-        Vector3 raycastStartPositionHeightAdjustment = new Vector3(currentUnit.transform.position.x, 1, currentUnit.transform.position.z);
+        Vector3 directionToBuilding = (buildTarget.transform.position - unit.transform.position).normalized;
+        Vector3 raycastStartPositionHeightAdjustment = new Vector3(unit.transform.position.x, 1, unit.transform.position.z);
         Physics.Raycast(raycastStartPositionHeightAdjustment, directionToBuilding, out RaycastHit buildingHit, Mathf.Infinity, layerMask);
-        Debug.Log("RaycastHit" + buildingHit.transform.gameObject.name);
+     //   Debug.Log("RaycastHit" + buildingHit.transform.gameObject.name);
 
         if (buildingHit.transform.gameObject == buildTarget || buildingHit.transform.parent.gameObject == buildTarget) //if the raycast hits the target building
         {
             //direct path to building found, give direct move order in direction of buidling with distance - unit range distance -10%
-            float distanceToBuilding = Vector3.Distance(currentUnit.transform.position, buildingHit.point);
-            float distanceToTravel = distanceToBuilding - (currentUnit.GetComponent<UnitBehaviour>().unitRange * 0.8f);
-            Vector3 newPosition = currentUnit.transform.position + (directionToBuilding * distanceToTravel);
+            float distanceToBuilding = Vector3.Distance(unit.transform.position, buildingHit.point);
+            float distanceToTravel = distanceToBuilding - (unit.GetComponent<UnitBehaviour>().unitRange * 0.8f);
+            Vector3 newPosition = unit.transform.position + (directionToBuilding * distanceToTravel);
             
-            if (Vector3.Distance(currentUnit.transform.position, buildTarget.transform.position) > currentUnit.GetComponent<UnitBehaviour>().unitRange * 0.8f) { // if the unit is far from the building move there first
+            if (Vector3.Distance(unit.transform.position, buildTarget.transform.position) > unit.GetComponent<UnitBehaviour>().unitRange * 0.8f) { // if the unit is far from the building move there first
                 Order moveorder = new Order("move", newPosition + new Vector3(Random.Range(-2f, 2f), 0, Random.Range(-2f, 2f)), true);
-            currentUnit.GetComponent<UnitBehaviour>().addOrderToQueue(moveorder);
+                unit.GetComponent<UnitBehaviour>().addOrderToQueue(moveorder);
 
                 Order buildorder = new Order("build", buildTarget, false);
-            currentUnit.GetComponent<UnitBehaviour>().addOrderToQueue(buildorder);
+                unit.GetComponent<UnitBehaviour>().addOrderToQueue(buildorder);
             }
             else
             {
-                Order buildorder = new Order("build", buildTarget, true);
-                currentUnit.GetComponent<UnitBehaviour>().addOrderToQueue(buildorder);
+                unit.GetComponent<UnitBehaviour>().addOrderToQueue(new Order("build", buildTarget, true));
             }
             
 
         }
         else
         {
-            Debug.Log("No direct path from " + currentUnit.name + " to " + buildTarget.name);
+            var seeker = unit.GetComponent<Seeker>();
 
-            //there is no direct path
+            // Start a new path request from the current position to a position 10 units forward.
+            // When the path has been calculated, it will be returned to the function OnPathComplete unless it was canceled by another path request
+            Order order = new Order("build", buildTarget);
+            unit.GetComponent<UnitBehaviour>().finalOrder = order;
+            Seeker seekerbuild = unit.GetComponent<Seeker>();
+
+            seeker.StartPath(transform.position, buildTarget.transform.position, unit.GetComponent<UnitBehaviour>().OnPathComplete);
+
         }
     }
-    public void GiveOneMoveOrder(GameObject unit, Vector3 location)
+    public void GiveOneMoveOrder(GameObject unit, Vector3 location, bool emptyQueue = true)
     {
-        Order order = new Order("move", location, true);
-        unit.GetComponent<UnitBehaviour>().addOrderToQueue(order);
+        Order order = new Order("move", location, emptyQueue);
+        // unit.GetComponent<UnitBehaviour>().addOrderToQueue(order);
+        unit.GetComponent<UnitBehaviour>().finalOrder = order;
+
+        var seeker = unit.GetComponent<Seeker>();
+        // Start a new path request from the current position to a position 10 units forward.
+        // When the path has been calculated, it will be returned to the function OnPathComplete unless it was canceled by another path request
+        seeker.StartPath(unit.transform.position, location, unit.GetComponent<UnitBehaviour>().OnPathComplete);
     }
-    public void GiveOneDirectMoveOrder(GameObject unit, Vector3 location)//give one unit a move order directly to a point, no pathing
-    {
-        Order order = new Order("move", location, true);
-        unit.GetComponent<UnitBehaviour>().addOrderToQueue(order);
-    }
+
 
     private void getMovePositions (Vector3 location) 
     {

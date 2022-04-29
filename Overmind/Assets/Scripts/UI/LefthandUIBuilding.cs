@@ -107,7 +107,7 @@ public class LefthandUIBuilding : MonoBehaviour
         {
             Text unitNameText;
             unitIconsPlaced = 0;
-            while (unitIconsPlaced < selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue.Count)
+            while (unitIconsPlaced < selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue.Count)
             {
 
                 if (unitIconsPlaced == 0)
@@ -120,11 +120,11 @@ public class LefthandUIBuilding : MonoBehaviour
                     float newX = unitIcon.transform.localPosition.x + (unitIconsPlaced * 55);
                     unitIcons[unitIconsPlaced].transform.localPosition = new Vector3(newX, unitIcon.transform.localPosition.y, unitIcon.transform.localPosition.z);
                     unitNameText = unitIcons[unitIconsPlaced].transform.Find("UnitName").GetComponent<Text>();
-                    unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
+                    unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
                   //  unitImage = unitIcons[unitIconsPlaced].transform.Find("Image").gameObject.GetComponent<Image>();
-                   // unitImage.sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
+                   // unitImage.sprite = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
                    // unitImages.Add(unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>());
-                    unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
+                    unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
              //       Debug.Log("placed  first building unit icon");
 
                 }
@@ -140,14 +140,14 @@ public class LefthandUIBuilding : MonoBehaviour
                     unitIcons[unitIconsPlaced].transform.localPosition = new Vector3(unitIcon.transform.localPosition.x + (unitIconsPlaced * 55), unitIcon.transform.localPosition.y, unitIcon.transform.localPosition.z);
                     unitIcons[unitIconsPlaced].name = "unitIcon" + unitIconsPlaced;
                    unitNameText = unitIcons[unitIconsPlaced].transform.Find("UnitName").GetComponent<Text>();
-                    unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
-                    unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
+                    unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
+                    unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
 
                  //   Debug.Log("Placed a new uniticon in the building screen");
                      //unitImage = unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>();
-                   // unitImage.sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
+                   // unitImage.sprite = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
                     //unitImages.Add(unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>());
-                    //unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
+                    //unitIcons[unitIconsPlaced].transform.Find("Image").GetComponent<Image>().sprite = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitIcon;
                 }
                 unitIconsPlaced++;
 
@@ -156,10 +156,10 @@ public class LefthandUIBuilding : MonoBehaviour
                 //unitIcons[unitIconsPlaced].name =  "unitIcon" + unitIconsPlaced;;
                 // Debug.Log("Lefthandbuilding str unitIcons[unitIconsPlaced].name = " + unitIcons[unitIconsPlaced].name);
 
-                // Debug.Log("Lefthandbuildingui Text for unit icon should be " + selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType);
+                // Debug.Log("Lefthandbuildingui Text for unit icon should be " + selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType);
 
                 // unitNameText = unitIcons[unitIconsPlaced].transform.Find("UnitName").GetComponent<Text>();
-                //unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().OrderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
+                //unitNameText.text = selectedUnits[0].GetComponent<UnitBehaviour>().orderQueue[unitIconsPlaced].orderTarget.GetComponent<UnitBehaviour>().unitType;
                 // unitIconButton[unitIconsPlaced] = unitIcons[unitIconsPlaced].GetComponent<Button>();
                 // unitIconButton[unitIconsPlaced].onClick.AddListener(delegate { CancelBuildOrder(unitIconsPlaced); });
                 // Debug.Log("Lefthandbuilding ui count = " + unitIconsPlaced);

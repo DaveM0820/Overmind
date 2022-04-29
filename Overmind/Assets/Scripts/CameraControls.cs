@@ -163,18 +163,40 @@ public class CameraControls : MonoBehaviour
             {
                 if (initialRightPositionsSet == false)
                 {
-                    initialRightCursorPosition = RightCursor.transform.position;
-                    initialPlayerPosition = transform.position;
-                    initialRightPositionsSet = true;
+                    if (transform.position.y > 50)
+                    {
+
+                        initialRightCursorPosition = RightCursor.transform.position;
+                        initialPlayerPosition = transform.position;
+                        initialRightPositionsSet = true;
+                    }
+                    else
+                    {
+                        if (Vector3.Distance(transform.position, RightCursor.transform.position) < 200)
+                        {
+                            initialRightCursorPosition = RightCursor.transform.position;
+                            initialPlayerPosition = transform.position;
+                            initialRightPositionsSet = true;
+                        }
+                    
+                    }
                 }
+                else
+                {
+              
                 Vector3 currentRightCursorPosition = RightCursor.transform.position;
                 Vector3 positionDelta = initialRightCursorPosition - currentRightCursorPosition;
                 positionDelta.y = 0;
                 panVelocity += positionDelta * panSpeed;
                 panVelocity *= panSmoothing;
+                if (transform.position.y < 20)
+                {
+                    panVelocity *= 0.7f;
+                }
                 if (transform.position.x + panVelocity.x > cameraBoundLeft && transform.position.x + panVelocity.x < cameraBoundRight && transform.position.z + panVelocity.z > cameraBoundBottom && transform.position.z + panVelocity.z < cameraBoundTop)
                 {
                     transform.position += panVelocity;
+                    }
                 }
             }
             else
@@ -185,18 +207,36 @@ public class CameraControls : MonoBehaviour
             {
                 if (initialLeftPositionsSet == false)
                 {
-                    initialLeftCursorPosition = LeftCursor.transform.position;
-                    initialPlayerPosition = transform.position;
-                    initialLeftPositionsSet = true;
+                    if (transform.position.y > 50)
+                    {
+                        initialLeftCursorPosition = LeftCursor.transform.position;
+                        initialPlayerPosition = transform.position;
+                        initialLeftPositionsSet = true;
+                    }
+                    else
+                    {
+                        if (Vector3.Distance(transform.position, LeftCursor.transform.position) < 200)
+                        {
+                            initialLeftCursorPosition = LeftCursor.transform.position;
+                            initialPlayerPosition = transform.position;
+                            initialLeftPositionsSet = true;
+                        }
+
+                    }
                 }
+                else
+                {
+             
                 Vector3 currentLeftCursorPosition = LeftCursor.transform.position;
                 Vector3 positionDelta = initialLeftCursorPosition - currentLeftCursorPosition;
                 positionDelta.y = 0;
                 panVelocity += positionDelta * panSpeed;
                 panVelocity *= panSmoothing;
+        
                 if (transform.position.x + panVelocity.x > cameraBoundLeft && transform.position.x + panVelocity.x < cameraBoundRight && transform.position.z + panVelocity.z > cameraBoundBottom && transform.position.z + panVelocity.z < cameraBoundTop)
                 {
                     transform.position += panVelocity;
+                    }
                 }
             }
             else
@@ -307,7 +347,7 @@ public class CameraControls : MonoBehaviour
             transform.position += new Vector3(leftJoystickValue.x, rightJoystickValue.y, leftJoystickValue.y) * panSpeed * transform.position.y * 0.01f;
 
         }
-        else // if assuming direct control is true, IE moving camera in or out of direct control
+        else // if moving camera in or out of direct control
         {
             if (directControlButtonValue == 1 && movingCamToDirectControl == false && movingCamToDirectControl == false)
 
@@ -446,7 +486,7 @@ public class CameraControls : MonoBehaviour
                     {
                         filmGrain.active = false;
                     }
-                    selectedUnitBehaviour.OrderQueue.Clear();
+                    selectedUnitBehaviour.orderQueue.Clear();
 
                     assumeDirectControlButton.SetActive(true);
 
@@ -476,7 +516,7 @@ public class CameraControls : MonoBehaviour
 
             selectedUnitBehaviour.addOrderToQueue(new Order("stop"));
             Select.SelectedUnits.Clear();
-            selectedUnitBehaviour.OrderQueue.Clear();
+            selectedUnitBehaviour.orderQueue.Clear();
             timeSwitchingCameras = 0;
 
 
@@ -512,7 +552,7 @@ public class CameraControls : MonoBehaviour
         targetPlayerRotation = OvermindCamRotation;
         selectedUnit = unitBeingControlled;
         selectedUnitBehaviour.assumingDirectControl = false;
-        selectedUnitBehaviour.OrderQueue.Clear();
+        selectedUnitBehaviour.orderQueue.Clear();
 
         if (selectedUnit.GetComponent<UnitBehaviour>().unitType == "Builder" || selectedUnit.GetComponent<UnitBehaviour>().unitType == "Mech")
         {

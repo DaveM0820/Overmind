@@ -3,9 +3,12 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 //using UnityEngine.XR.Interaction.Toolkit;
-
+using Vectrosity;
+using Pathfinding;
 public class Select : MonoBehaviour
 {
+
+    int numberoflines;
     public InputActionReference SelectActionRefrence = null;
     private float ButtonValue;
 
@@ -38,6 +41,8 @@ public class Select : MonoBehaviour
     GameObject directControlButton;
     GameObject returnToOVermindButton;
     GameObject defaultScreen;
+    int numberOfSelectedUnits;
+    List<VectorLine> selectedUnitUILines = new List<VectorLine>();
 
 
     public static List<GameObject> SelectedUnits = null;
@@ -69,16 +74,31 @@ public class Select : MonoBehaviour
 
     // Update is called once per frame
     void Update() {
+        numberOfSelectedUnits = SelectedUnits.Count;
+        if (numberOfSelectedUnits > 0)
+        {
+            numberoflines = 0;
+            foreach (VectorLine line in selectedUnitUILines)
+            {
 
-        int layerMask = 1 << 6;//layer 6 is ground, bitshift 1 to 6
-                               //  GameObject leftHand = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller");
-                               //  GameObject rightHand = GameObject.Find("/XR Rig/Camera Offset/RightHand Controller");
-                               //  leftHand.GetComponent<XRRayInteractor>().TryGetCurrent3DRaycastHit(out LeftRaycastHit);
-                               //  rightHand.GetComponent<XRRayInteractor>().TryGetCurrent3DRaycastHit(out RightRaycastHit);
-                               // Debug.Log("LeftRaycastHit = " + LeftRaycastHit.transform.name);
+                if (numberoflines < 10 && numberoflines < numberOfSelectedUnits)
+                {
+                    if (line.name == "line")
+                    {
+                        line.points3[0] = SelectedUnits[numberoflines].transform.position;
 
-        Physics.Raycast(RightArmPosition.position, RightArmPosition.TransformDirection(Vector3.forward), out RightRaycastHit, Mathf.Infinity, layerMask);
-        Physics.Raycast(LeftArmPosition.position, LeftArmPosition.TransformDirection(Vector3.forward), out LeftRaycastHit, Mathf.Infinity, layerMask);
+                    }
+                    else
+                    {
+                       // line.drawTransform.position = SelectedUnits[numberoflines].transform.position;
+                    }
+
+                    numberoflines++;
+                }
+            }
+        }
+        Physics.Raycast(RightArmPosition.position, RightArmPosition.TransformDirection(Vector3.forward), out RightRaycastHit, Mathf.Infinity, 1 << 6);
+        Physics.Raycast(LeftArmPosition.position, LeftArmPosition.TransformDirection(Vector3.forward), out LeftRaycastHit, Mathf.Infinity, 1 << 6);
         if (gameObject.GetComponent<CameraControls>().assumingDirectControl == false || SelectedUnits.Count > 1)
         {
             RightCursor.transform.position = new Vector3(RightRaycastHit.point.x, 0, RightRaycastHit.point.z);
@@ -162,33 +182,33 @@ public class Select : MonoBehaviour
                 hasMilitaryunits = false;
                 hasBuildings = false;
                 hasBuilderUnits = false;
-             
-                Collider[] hitColliders = Physics.OverlapBox(SelectionBox.transform.position, SelectionBox.transform.localScale / 2, Quaternion.identity, LayerMask.GetMask("Units","Buildings"),QueryTriggerInteraction.Collide);//get a list of objects within the selection box
+
+                Collider[] hitColliders = Physics.OverlapBox(SelectionBox.transform.position, SelectionBox.transform.localScale / 2, Quaternion.identity, LayerMask.GetMask("Units", "Buildings"), QueryTriggerInteraction.Collide);//get a list of objects within the selection box
                 for (int counter = 0; counter < hitColliders.Length; counter++)
                 {
-                
-              
-             
+
+
+
                     if (hitColliders[counter].gameObject.TryGetComponent(out UnitBehaviour unitBehaviour))
                     {
-                  
-                    if (hitColliders[counter].gameObject.layer == 9)//and if a unit is selected
+
+                        if (hitColliders[counter].gameObject.layer == 9)//and if a unit is selected
 
                         {
 
-                        if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "Builder")//and its a builder 
+                            if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType == "Builder")//and its a builder 
 
                             {
 
-                            hasBuilderUnits = true;//a builder is selected
+                                hasBuilderUnits = true;//a builder is selected
 
                             }
                             else
                             {
                                 hasMilitaryunits = true;//if its not a builder a military unit selected
 
+                            }
                         }
-                    }
                         else if (hitColliders[counter].gameObject.layer == 7) // if a building is selected
                         {
                             hasBuildings = true; //there is a building selected 
@@ -213,7 +233,6 @@ public class Select : MonoBehaviour
                                 if (hitColliders[counter].gameObject.GetComponent<UnitBehaviour>().unitType != "Builder")
                                 {
                                     SelectUnit(hitColliders[counter].gameObject); //select the units which are not builders
-                                    Debug.Log("should select military units");
                                 }
                             }
                         }
@@ -272,7 +291,7 @@ public class Select : MonoBehaviour
                                     SelectUnit(hitColliders[counter].gameObject);
                                 }
                             }
-                            
+
 
                             counter++;
 
@@ -291,12 +310,72 @@ public class Select : MonoBehaviour
                 Destroy(SelectionBox);
             }
         }
+
     }
     private void SelectUnit(GameObject unit) //function to select a single unit
     {
         SelectedUnits.Add(unit);
         unit.GetComponent<UnitBehaviour>().Select();
 
+        DrawOrderLine(unit);
+    }
+    public void DrawOrderLine(GameObject unit) {
+        if (numberoflines < 10)
+        {
+            UnitBehaviour unitBehaviour = unit.GetComponent<UnitBehaviour>();
+
+            VectorLine.Destroy(ref unitBehaviour.orderLine);
+            VectorLine.Destroy(ref unitBehaviour.rangeCircle);
+            VectorLine circle = new VectorLine("range", new List<Vector3>(), 6f, LineType.Continuous);
+            circle.SetColor(Color.red);
+            circle.MakeCircle(unit.transform.position, Vector3.up, unitBehaviour.unitRange, 10);
+            circle.Draw3DAuto();
+            selectedUnitUILines.Add(circle);
+            unitBehaviour.rangeCircle = circle;
+            List<Vector3> orderpostitions = new List<Vector3>();
+            List<Color32> orderColors = new List<Color32>();
+         //   Debug.Log("draw line 2");
+
+            orderpostitions.Add(unit.transform.position);
+        //    Debug.Log("draw line 3");
+
+            foreach (Order order in unitBehaviour.orderQueue)
+            {
+
+
+                switch (order.orderTypeNumber)
+                {
+
+                    case 1:
+                    orderpostitions.Add(order.orderPosition);
+                    orderColors.Add(Color.blue);
+                    break;
+                    case 2:
+                    orderpostitions.Add(order.orderTarget.transform.position);
+                    orderColors.Add(Color.green);
+
+                    break;
+                    case 3:
+                    orderpostitions.Add(order.orderTarget.transform.position);
+                    orderColors.Add(Color.red);
+
+                    break;
+                }
+
+            }
+          //  Debug.Log("draw line 4");
+
+            VectorLine line = new VectorLine("orders", orderpostitions, 6f, LineType.Continuous);
+            line.SetColors(orderColors);
+
+            line.Draw3DAuto();
+
+            unitBehaviour.orderLine = line;
+            selectedUnitUILines.Add(line);
+        //    Debug.Log("draw line 5");
+     
+
+        }
     }
     public void SwitchLeftHandUIScreen(string screen) //switches the menu on the left hand depending on what is selected
     {
@@ -377,6 +456,7 @@ public class Select : MonoBehaviour
 
     public void DeselectUnits() //deslects the units and resets the left hand UI
     {
+        VectorLine.Destroy(selectedUnitUILines);
         if (SelectedUnits.Count > 0)
         {
             int counter = 0;

@@ -2030,6 +2030,7 @@ GameObject:
   - component: {fileID: 3551708948406583355}
   - component: {fileID: 3551708948406583354}
   - component: {fileID: 6910926225095193208}
+  - component: {fileID: 6139360799436911042}
   m_Layer: 7
   m_Name: Refinery
   m_TagString: Untagged
@@ -2068,11 +2069,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 185a12367c8e66e4ca708af825def020, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackMoveEnabled: 0
+  attackWhileMoving: 0
   selected: 0
-  owner: 0
+  faction: 0
   cost: 500
   hpMax: 1000
   hp: 1
+  military: 0
   hpPercent: 1
   unitType: Refinery
   unitBuildTime: 0
@@ -2081,13 +2085,14 @@ MonoBehaviour:
   cameraSizeWhenUnderDirectControl: 0
   assumingDirectControl: 0
   headHeight: 0
-  moveType: 
   moveSpeed: 0
-  turnSpeed: 0
-  acceleration: 0
   updateTimestep: 0.5
   unitIcon: {fileID: 21300000, guid: a051e3a04a45fd544b43c4bd2ef7e041, type: 3}
+  queueIsEmpty: 1
   hpChange: 0
+  LookForTargetsCounterMax: 0
+  currentTarget: {fileID: 0}
+  evading: 0
 --- !u!114 &3551708948406583355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2122,6 +2127,7 @@ MonoBehaviour:
   oreLocation: {x: 0, y: 0, z: 0}
   buidlingDimensions: {x: 10, y: 10}
   text: {fileID: 3879402439870607439, guid: f08e8f62e32d61b4791612ddec28992b, type: 3}
+  explosion: {fileID: 0}
 --- !u!135 &3551708948406583354
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -2148,6 +2154,34 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 10, y: 30, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &6139360799436911042
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3551708948406583356}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bee0a6fa1f5d4f4db481219040523c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+  graphMask:
+    value: -1
+  type: 0
+  mesh: {fileID: 0}
+  rectangleSize: {x: 10, y: 10}
+  circleRadius: 1
+  circleResolution: 6
+  height: 2
+  meshScale: 1
+  center: {x: 0, y: 0, z: 0}
+  updateDistance: 0.4
+  isDual: 0
+  cutsAddedGeom: 1
+  updateRotationDistance: 10
+  useRotationAndScale: 0
 --- !u!1 &3551708948444964033
 GameObject:
   m_ObjectHideFlags: 0
