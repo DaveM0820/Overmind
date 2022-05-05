@@ -121,7 +121,7 @@ Transform:
   m_GameObject: {fileID: 300219386135531141}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.5, z: 0}
-  m_LocalScale: {x: 2, y: 1, z: 2.4}
+  m_LocalScale: {x: 1.5, y: 1, z: 1.6}
   m_Children:
   - {fileID: 1026696303871103264}
   m_Father: {fileID: 1627047421731808154}
@@ -1159,8 +1159,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1627047421731808154}
-  - component: {fileID: 5082981450994413566}
+  - component: {fileID: -7999276393453898722}
   - component: {fileID: 4457223814153729391}
+  - component: {fileID: -8167891204172341229}
+  - component: {fileID: 7716240163751589192}
+  - component: {fileID: 3713430554129597111}
   m_Layer: 0
   m_Name: Heavy Tank 1
   m_TagString: Untagged
@@ -1186,7 +1189,7 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5082981450994413566
+--- !u!114 &-7999276393453898722
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1202,18 +1205,18 @@ MonoBehaviour:
   attackWhileMoving: 1
   selected: 0
   faction: 0
-  cost: 1500
-  hpMax: 10000
-  hp: 10000
+  cost: 1000
+  hpMax: 1000
+  hp: 1000
   military: 1
   hpPercent: 100
-  unitType: Tank
+  unitType: HeavyTank
   unitBuildTime: 50
   isBuilding: 0
   unitRange: 100
   cameraSizeWhenUnderDirectControl: 1
   assumingDirectControl: 0
-  headHeight: 2
+  headHeight: 6
   moveSpeed: 10
   updateTimestep: 0
   unitIcon: {fileID: 0}
@@ -1394,7 +1397,7 @@ MonoBehaviour:
   turretNumber: 0
   canFire: 0
   vehicleNumber: 0
-  hasTurret: 0
+  hasTurret: 1
   directMove: 0
 --- !u!114 &4457223814153729391
 MonoBehaviour:
@@ -1408,6 +1411,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20850c971389bf340b7bc3bde6f02032, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  turnSpeed: 0.1
+  acceleration: 0.01
+  dampening: 0.95
   turret: {fileID: 4903722519025593474}
   gun: {fileID: 5034149660598851034}
   turretRotationSpeed: 2
@@ -1417,6 +1423,63 @@ MonoBehaviour:
   muzzleFlash: {fileID: 4195816558333466492}
   canShoot: 0
   driver: {fileID: 329759688228428889}
+--- !u!136 &-8167891204172341229
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1627047421732114584}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 8
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &7716240163751589192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1627047421732114584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 373b52eb9bf8c40f785bb6947a1aee66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+  drawGizmos: 1
+  detailedGizmos: 0
+  startEndModifier:
+    addPoints: 0
+    exactStartPoint: 3
+    exactEndPoint: 3
+    useRaycasting: 0
+    mask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    useGraphRaycasting: 0
+  traversableTags: -1
+  tagPenalties: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+  graphMask:
+    value: -1
+--- !u!114 &3713430554129597111
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1627047421732114584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77f586f285b3847808d79083bd19ef1f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  version: 1
+  unwrap: 1
+  splitAtEveryPortal: 0
 --- !u!1 &1764684645962853063
 GameObject:
   m_ObjectHideFlags: 0
@@ -2761,6 +2824,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11400002, guid: 0661276422528d74d8c9894abad93242, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 0661276422528d74d8c9894abad93242, type: 3}
 --- !u!198 &4195816558333466492 stripped
@@ -2781,15 +2848,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: babf0045bec903a478cbbdb0c9c83978, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: babf0045bec903a478cbbdb0c9c83978, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: babf0045bec903a478cbbdb0c9c83978, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1
+      value: 0.8
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: babf0045bec903a478cbbdb0c9c83978, type: 3}
       propertyPath: m_LocalPosition.x

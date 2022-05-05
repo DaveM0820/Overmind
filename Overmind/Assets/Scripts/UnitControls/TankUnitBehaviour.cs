@@ -5,6 +5,10 @@ using UnityEngine;
 public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
 {
     // Start is call   public GameObject explosion;
+    public float turnSpeed;
+    public float acceleration;
+    public float dampening;
+
     GameObject explosionCopy;
     public Transform turret;
     public Transform gun;
@@ -19,7 +23,7 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
     float elapsed;
     int currentOrder = 0;
     int LookForTargetsCounter = 0;
-    int LookForTargetsCounterMax = 2;
+    int LookForTargetsCounterMax = 20;
     Unit thisUnit;
     int unitRange;
     int turretNumber;
@@ -39,6 +43,9 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
     float moveSpeed;
 
     bool dead = false;
+
+
+
 
   void Update() // updates every updateTimeStep, initally set by updateFPS in GlobalGameInformation. This way the framerate of units can be increased or decreased depending on current performance.
     {
@@ -91,10 +98,10 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
             }
             if (LookForTargetsCounter > LookForTargetsCounterMax)
             {
-              
+                if (!unitBehaviour.hasTarget)
+                {
                     jobManager.LookForTarget(thisUnit, unitRange);
-
-                
+                }
             }
         }
     }
@@ -106,7 +113,7 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
         updateTimestep = unitBehaviour.updateTimestep;
         vehicleNumber = unitBehaviour.vehicleNumber;
         turretNumber = unitBehaviour.turretNumber;
-
+       // unitBehaviour.addOrderToQueue(new Order("move", new Vector3(transform.position.x + 100, 0, transform.position.z + 100)));
     }
     void Awake() {
 
@@ -137,11 +144,10 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
 
 
         moveSpeed = unitBehaviour.moveSpeed;
-
         jobManager = player.GetComponent<JobManager>();
 
         jobManager.AddTurretToMove(gameObject, turret, gun, turretRotationSpeed);
-
+        jobManager.AddVehicleToMove(transform, moveSpeed, turnSpeed, acceleration, dampening);
     }
 
 
@@ -156,8 +162,16 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
         unitBehaviour.OrderComplete();
 
         recharge += updateTimestep;
- 
 
+        if (recharge > rechargeTime)
+        {
+            if (unitBehaviour.canFire)
+            {
+                muzzleFlash.Play();
+                recharge = 0;
+            }
+        
+        }
 
 
 
@@ -261,8 +275,7 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
             // Debug.Log("got move order from " + transform.position + " to " + movetarget);
             currentMoveTarget = movetarget;
 
-
-          //  jobManager.moveVehicle();
+            jobManager.MoveVehicle(vehicleNumber, movetarget);
             currentOrder = 1;
 
         }
@@ -271,8 +284,8 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
     }
     // Update is called once per frame
     public void Stop() {
-
-        unitBehaviour.orderQueue.Clear();
-
+    //    jobManager.StopMovingVehicle(vehicleNumber);
+        unitBehaviour.ClearAllOrders();
+        currentOrder = 0;
     }
 }

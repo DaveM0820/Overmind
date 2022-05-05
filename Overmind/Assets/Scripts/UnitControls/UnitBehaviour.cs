@@ -57,7 +57,6 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
     public bool hasTurret;
     public bool directMove;
     void Awake() {
-        thisUnit = new Unit(faction, gameObject, military);
 
         finalOrder = new Order(0);
         fullFPSTimeStep = 1f / 72f;
@@ -66,7 +65,7 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
         selectScript = player.GetComponent<Select>();
         selectionMarker = transform.Find("SelectionMarker");
         // LookForTargetsCounterMax = player.GetComponent<GlobalGameInformation>().LookForTargetsCounterMax;
-        Deselect();
+      
         if (!military)
         {
             currentTarget = gameObject;
@@ -90,6 +89,8 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
             }
         }
         action = gameObject.GetComponent<IUnitActionInterface>();
+        thisUnit = new Unit(faction, gameObject, military);
+
         globalGameInformation = player.GetComponent<GlobalGameInformation>();
         globalGameInformation.unitList[faction].Add(thisUnit);
         jobManager = player.GetComponent<JobManager>();
@@ -97,6 +98,7 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
         {
         jobManager.AddTransformToMove(transform, moveSpeed);
         }
+        Deselect();
     }
 
     // bascially orders are sent from UnitCommand and other scripts, and added to the order queue for each unit, which are then passed to the unit specific scrip through the IunitActionInterface
@@ -221,6 +223,8 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
         }
     }
     public void TargetGone() {
+        if (hasTarget)
+        {
         if (hasTurret)
         {
             jobManager.StopMovingTurret(turretNumber);
@@ -231,8 +235,16 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
         }
         currentTarget = null;
         hasTarget = false;
+        }
     }
+    public void ClearAllOrders() {
+        hasTarget = false;
+        currentTarget = null;
+        queueIsEmpty = true;
+        currentOrderTypeNumber = 0;
+        orderQueue.Clear();
 
+    }
     public void addOrderToQueue(Order order)//adds an order to the unit's order queue
     {
 

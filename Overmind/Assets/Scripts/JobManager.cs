@@ -5,6 +5,9 @@ using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Burst;
 using System.Diagnostics;
+//using Unity.Entities;
+//using Unity.Transforms;
+//using Unity.Rendering;
 public class JobManager : MonoBehaviour
 {
     int numberOfPlayers;
@@ -51,7 +54,7 @@ public class JobManager : MonoBehaviour
 
     bool[] military = new bool[400];
     float3[,] targetsToCheck = new float3[400, 400];
-    Vector3[] targets = new Vector3[400];
+    Vector2[] targets = new Vector2[400];
     int[] numberOfTargetsPerFaction = new int[400];
     int[] unitsToLookForTargetCounter = new int[400];
     int[] stopCounting_notinjob = new int[400];
@@ -82,14 +85,9 @@ public class JobManager : MonoBehaviour
     Transform[] turretsToMove_moveTurret = new Transform[400];
     Transform[] gunToMove_moveTurret = new Transform[400];
     Transform[] target_moveTurret = new Transform[400];
-    float3[] turretposition_moveTurret = new float3[400];
-    float3[] targetposition_moveTurret = new float3[400];
     float3[] gunForward_moveTurret = new float3[400];
     float3[] turretForward_moveTurret = new float3[400];
-    float[] deltaTime_moveTurret = new float[400];
     float[] rotationspeed_moveTurret = new float[400];
-    float[] gunrechargetotal_moveTurret = new float[400];
-    float[] gunrechargecurrent_moveTurret = new float[400];
     bool[] shouldFire_moveTurret = new bool[400];
     bool[] shouldMove_moveTurret = new bool[400];
 
@@ -107,37 +105,47 @@ public class JobManager : MonoBehaviour
 
     //variables for moveVehilces/////////////////////////////////////////
     JobHandle moveVehiclesJobHandle;
+    MoveVehicles moveVehicles;
+
+    int totalVehicles;
     int vehiclesToMove = 0;
 
+    Transform[] vehicles_moveVehicle = new Transform[400];
+    bool[] shouldMove_moveVehicle = new bool[400];
     float3[] unitposition_moveVehicle = new float3[400];
-    float3[] targetposition_moveVehicle = new float3[400];
+    Vector3[] destination_moveVehicle = new Vector3[400];
     float3[] unitforward_moveVehicle = new float3[400];
-    float3[] unitVelocity_moveVehicle = new float3[400];
+    float[] unitVelocity_moveVehicle = new float[400];
     float[] unitMaxSpeed_moveVehicle = new float[400];
     float[] unitTurnSpeed_moveVehicle = new float[400];
     float[] deltaTime_moveVehicle = new float[400];
     float[] acceleration_moveVehicle = new float[400];
     float[] dampening_moveVehicle = new float[400];
-    bool[] atTarget_moveVehicle = new bool[400];
+    bool[] atDestination_moveVehicle = new bool[400];
 
 
 
     int shouldCheckDistanceCounter = 0;
-    bool shouldCheckDistance;
+    bool shouldCheckDistance = false;
     float elapsed;
     float updateTimestep;
     float halfTimestep;
 
+   // EntityManager entityManager;
     void Awake() {
         gameInformation = gameObject.GetComponent<GlobalGameInformation>();
         numberOfPlayers = gameInformation.numberOfPlayers;
         updateTimestep = gameInformation.updateTimestep;
         halfTimestep = updateTimestep / 2;
+      //  entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+       // Entity entity = entityManager.CreateEntity();
     }
     public void LookForTarget(Unit unit, int range) {
+
         unitsToLookForTarget[numberOfUnitsToLookForTarget] = unit;
         unitRange[numberOfUnitsToLookForTarget] = range;
         numberOfUnitsToLookForTarget++;
+
     }
     public void AddTransformToMove(Transform transform, float speed) {
         position_MoveTransforms[totaltransforms] = transform.position;
@@ -174,13 +182,9 @@ public class JobManager : MonoBehaviour
         unit_moveTurret[totalTurrets] = unit;
         turretsToMove_moveTurret[totalTurrets] = turret;
         gunToMove_moveTurret[totalTurrets] = gun;
-        gunForward_moveTurret[totalTurrets] = gun.forward;
-        turretForward_moveTurret[totalTurrets] = gun.forward;
         rotationspeed_moveTurret[totalTurrets] = rotateSpeed;
         shouldFire_moveTurret[totalTurrets] = false;
-        shouldMove_moveTurret[totalTurrets] = false;
         unit.GetComponent<UnitBehaviour>().turretNumber = totalTurrets;
-
         totalTurrets++;
     }
     public void MoveTurret(int index, Transform target) {
@@ -191,36 +195,53 @@ public class JobManager : MonoBehaviour
             shouldMove_moveTurret[index] = true;
 
         }
-        
+
         if (target != target_moveTurret[index])
         {
             target_moveTurret[index] = target;
         }
-      //  UnityEngine.Debug.Log("should move turret of index" + index + " total turrets to move " + turretsToMove);
+        //  UnityEngine.Debug.Log("should move turret of index" + index + " total turrets to move " + turretsToMove);
 
     }
-    public void StopMovingTurret(int index)  {
+    public void StopMovingTurret(int index) {
         if (shouldMove_moveTurret[index])
         {
             shouldMove_moveTurret[index] = false;
             turretsToMove--;
         }
     }
-    public void AddVehicleToMove( ) {
-       // turretUpdateArray[turretsToMove] = turret;
-        //turretsToMove++;
-    }   
-    public void moveVehicle(GameObject unit, Vector3 targetLocation, Vector3 unitVelocity, float maxSpeed, float turnSpeed, float timeStep, float acceleration, float dampening) {
+    public void AddVehicleToMove(Transform vehicleTransform, float maxSpeed, float turnSpeed, float acceleration, float dampening) {
+        vehicles_moveVehicle[totalVehicles] = vehicleTransform;
+        unitMaxSpeed_moveVehicle[totalVehicles] = maxSpeed;
+        unitTurnSpeed_moveVehicle[totalVehicles] = turnSpeed;
+        acceleration_moveVehicle[totalVehicles] = acceleration;
+        dampening_moveVehicle[totalVehicles] = dampening;
+        shouldMove_moveVehicle[totalVehicles] = false;
+        vehicleTransform.gameObject.GetComponent<UnitBehaviour>().vehicleNumber = totalVehicles;
 
-        unitposition_moveVehicle[vehiclesToMove] = unit.transform.position;
-        targetposition_moveVehicle[vehiclesToMove] = targetLocation;
-        unitforward_moveVehicle[vehiclesToMove] = unit.transform.forward;
-        unitVelocity_moveVehicle[vehiclesToMove] = unitVelocity;
-        unitMaxSpeed_moveVehicle[vehiclesToMove] = maxSpeed;
-        unitTurnSpeed_moveVehicle[vehiclesToMove] = turnSpeed;
-        deltaTime_moveVehicle[vehiclesToMove] = timeStep;
-        acceleration_moveVehicle[vehiclesToMove] = acceleration;
-        dampening_moveVehicle[vehiclesToMove] = dampening;
+        totalVehicles++;
+    }
+    public void MoveVehicle(int vehicleNumber, Vector3 destination) {
+        if (!shouldMove_moveVehicle[vehicleNumber])
+        {
+            vehiclesToMove++;
+
+            shouldMove_moveVehicle[vehicleNumber] = true;
+
+        }
+
+        if (destination != destination_moveVehicle[vehicleNumber])
+        {
+            destination_moveVehicle[vehicleNumber] = destination;
+        }
+    }
+    public void StopMovingVehicle(int vehicleNumber) {
+        if (shouldMove_moveVehicle[vehicleNumber])
+        {
+            shouldMove_moveVehicle[vehicleNumber] = false;
+            vehiclesToMove--;
+        }
+
     }
 
     void Update() {
@@ -237,31 +258,49 @@ public class JobManager : MonoBehaviour
         }
         if (elapsed == 0)
         {
-         
-        }
-        if (elapsed >= updateTimestep) //run the order every updateTimestep using the UpdateUnit method
-        {
-            performanceTimer.Restart();
-  
             if (turretsToMove > 0)
             {
+                performanceTimer.Restart();
                 MoveTurrets();
+               //   UnityEngine.Debug.Log("PerformanceTimer, MoveTurrets  " + performanceTimer.Elapsed.TotalMilliseconds);
+
             }
+        }
+        elapsed += Time.deltaTime;
+
+        if (elapsed >= updateTimestep) //run the order every updateTimestep using the UpdateUnit method
+        {
+         
+            if (vehiclesToMove > 0)
+            {
+                performanceTimer.Restart();
+
+                MoveVehicles();
+              //  UnityEngine.Debug.Log("PerformanceTimer, MoveVehicles  " + performanceTimer.Elapsed.TotalMilliseconds);
+
+            }
+
             if (numberOfUnitsToLookForTarget > 0)
             {
+                performanceTimer.Restart();
+
                 LookForTargets();
+               // UnityEngine.Debug.Log("PerformanceTimer, LookForTargets  " + performanceTimer.Elapsed.TotalMilliseconds);
+
             }
-         //   UnityEngine.Debug.Log("PerformanceTimer, LookForTargets:  " + performanceTimer.Elapsed.TotalMilliseconds);
+            //   UnityEngine.Debug.Log("PerformanceTimer, LookForTargets:  " + performanceTimer.Elapsed.TotalMilliseconds);
 
             if (transformsToMove > 0)
             {
+                performanceTimer.Restart();
+
                 MoveTransforms();
+              // UnityEngine.Debug.Log("PerformanceTimer, MoveTransforms  " + performanceTimer.Elapsed.TotalMilliseconds);
+
             }
-            UnityEngine.Debug.Log("PerformanceTimer, all jobs:  " + performanceTimer.Elapsed.TotalMilliseconds);
 
             elapsed = 0;
         }
-        elapsed += Time.deltaTime;
 
 
         // JobHandle.CompleteAll(jobList);
@@ -283,8 +322,8 @@ public class JobManager : MonoBehaviour
         if (updateUnitPositionsCounter <= 0) // only do it every 40 frames
         {
 
-            targets = new Vector3[1000];
-            military = new bool[1000];
+            targets = new Vector2[400];
+            military = new bool[400];
 
             numberOfTargetsPerFaction = new int[numberOfPlayers];
             totalNumberOfTargets = 0;
@@ -292,7 +331,7 @@ public class JobManager : MonoBehaviour
             {
                 foreach (Unit unitToCheck in gameInformation.unitList[currentfaction])
                 {
-                    targets[totalNumberOfTargets] = unitToCheck.gameObject.transform.position;
+                    targets[totalNumberOfTargets] = new Vector2 (unitToCheck.gameObject.transform.position.x, unitToCheck.gameObject.transform.position.z);
                     military[totalNumberOfTargets] = unitToCheck.military;
                     target[totalNumberOfTargets] = unitToCheck;
                     totalNumberOfTargets++;
@@ -331,12 +370,10 @@ public class JobManager : MonoBehaviour
         // UnityEngine.Debug.Log("moveturrets got here1 turrets to move" + turretsToMove);
         NativeArray<float3> turretPosition_moveTurret_Native = new NativeArray<float3>(turretsToMove, Allocator.TempJob);
         NativeArray<float3> targetPosition_moveTurret_Native = new NativeArray<float3>(turretsToMove, Allocator.TempJob);
-        NativeArray<float3> gunForward_moveTurret_Native = new NativeArray<float3>(turretsToMove, Allocator.TempJob);
-        NativeArray<float3> turretForward_moveTurret_Native = new NativeArray<float3>(turretsToMove, Allocator.TempJob);
+        NativeArray<quaternion> gunRotation_moveTurret_Native = new NativeArray<quaternion>(turretsToMove, Allocator.TempJob);
+        NativeArray<quaternion> turretRotation_moveTurret_Native = new NativeArray<quaternion>(turretsToMove, Allocator.TempJob);
         NativeArray<float> deltaTime_moveTurret_Native = new NativeArray<float>(turretsToMove, Allocator.TempJob);
         NativeArray<float> rotationSpeed_moveTurret_Native = new NativeArray<float>(turretsToMove, Allocator.TempJob);
-        NativeArray<float> gunrechargeTotal_moveTurret_Native = new NativeArray<float>(turretsToMove, Allocator.TempJob);
-        NativeArray<float> gunrechargeCurrent_moveTurret_Native = new NativeArray<float>(turretsToMove, Allocator.TempJob);
         NativeArray<bool> canFire_moveTurret_Native = new NativeArray<bool>(turretsToMove, Allocator.TempJob);
         NativeArray<bool> shouldCheckDistance_moveTurret_Native = new NativeArray<bool>(1, Allocator.TempJob);
 
@@ -355,8 +392,8 @@ public class JobManager : MonoBehaviour
                     {
                         turretPosition_moveTurret_Native[turretsToMoveCounter] = turretsToMove_moveTurret[i].position;
                         targetPosition_moveTurret_Native[turretsToMoveCounter] = target_moveTurret[i].position;
-                        gunForward_moveTurret_Native[turretsToMoveCounter] = gunToMove_moveTurret[i].forward;
-                        turretForward_moveTurret_Native[turretsToMoveCounter] = turretsToMove_moveTurret[i].forward;
+                        gunRotation_moveTurret_Native[turretsToMoveCounter] = gunToMove_moveTurret[i].rotation;
+                        turretRotation_moveTurret_Native[turretsToMoveCounter] = turretsToMove_moveTurret[i].rotation;
                         deltaTime_moveTurret_Native[turretsToMoveCounter] = updateTimestep;
                         rotationSpeed_moveTurret_Native[turretsToMoveCounter] = rotationspeed_moveTurret[i];
                         canFire_moveTurret_Native[turretsToMoveCounter] = false;
@@ -381,8 +418,8 @@ public class JobManager : MonoBehaviour
 
             unitposition = turretPosition_moveTurret_Native,
             targetposition = targetPosition_moveTurret_Native,
-            gunForward = gunForward_moveTurret_Native,
-            turretForward = turretForward_moveTurret_Native,
+            gunRotation = gunRotation_moveTurret_Native,
+            turretRotation = turretRotation_moveTurret_Native,
             deltaTime = deltaTime_moveTurret_Native,
             rotationspeed = rotationSpeed_moveTurret_Native,
             canfire = canFire_moveTurret_Native,
@@ -400,12 +437,16 @@ public class JobManager : MonoBehaviour
         {
             if (shouldMove_moveTurret[i])
             {
-                turretsToMove_moveTurret[i].forward = (Vector3)moveTurrets.turretForward[turretsToMoveCounter];
-                gunToMove_moveTurret[i].forward = (Vector3)moveTurrets.gunForward[turretsToMoveCounter];
+               // UnityEngine.Debug.Log(i + "out of job turret rotation before " + turretsToMove_moveTurret[i].rotation);
+
+                turretsToMove_moveTurret[i].rotation = moveTurrets.turretRotation[turretsToMoveCounter];
+                gunToMove_moveTurret[i].rotation = moveTurrets.gunRotation[turretsToMoveCounter];
+              //  UnityEngine.Debug.Log(i + "out of job turret rotation after " + turretsToMove_moveTurret[i].rotation);
+
                 if (moveTurrets.canfire[turretsToMoveCounter])
                 {
                     unit_moveTurret[i].GetComponent<UnitBehaviour>().canFire = true;
-                    UnityEngine.Debug.Log("can fire!");
+                 //   UnityEngine.Debug.Log("can fire!");
                 }
                 turretsToMoveCounter++;
                 if (turretsToMoveCounter > turretsToMove)
@@ -416,21 +457,121 @@ public class JobManager : MonoBehaviour
         }
         //  Debug.Log("gave movement orders to turrets");
         // UnityEngine.Debug.Log("moveturrets got here5");
-
+        shouldCheckDistance_moveTurret_Native.Dispose();
         turretPosition_moveTurret_Native.Dispose();
         targetPosition_moveTurret_Native.Dispose();
-        gunForward_moveTurret_Native.Dispose();
-        turretForward_moveTurret_Native.Dispose();
+        gunRotation_moveTurret_Native.Dispose();
+        turretRotation_moveTurret_Native.Dispose();
         deltaTime_moveTurret_Native.Dispose();
         rotationSpeed_moveTurret_Native.Dispose();
-        gunrechargeTotal_moveTurret_Native.Dispose();
-        gunrechargeCurrent_moveTurret_Native.Dispose();
         canFire_moveTurret_Native.Dispose();
 
 
     }
+    void MoveVehicles() {
+
+
+        // UnityEngine.Debug.Log("moveturrets got here1 turrets to move" + turretsToMove);
+        NativeArray<bool> shouldMove_moveVehicle_Native = new NativeArray<bool>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<float3> unitposition_moveVehicle_Native = new NativeArray<float3>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<float3> destination_moveVehicle_Native = new NativeArray<float3>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<quaternion> unitforward_moveVehicle_Native = new NativeArray<quaternion>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<float> unitVelocity_moveVehicle_Native = new NativeArray<float>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<float> unitMaxSpeed_moveVehicle_Native = new NativeArray<float>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<float> unitTurnSpeed_moveVehicle_Native = new NativeArray<float>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<float> deltaTime_moveVehicle_Native = new NativeArray<float>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<float> acceleration_moveVehicle_Native = new NativeArray<float>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<bool> atDestination_moveVehicle_Native = new NativeArray<bool>(vehiclesToMove, Allocator.TempJob);
+        NativeArray<bool> shouldCheckDistance_moveVehicle_Native = new NativeArray<bool>(1, Allocator.TempJob);
+
+        shouldCheckDistance_moveVehicle_Native[0] = shouldCheckDistance;
+        // UnityEngine.Debug.Log("moveturrets got here2");
+
+        int vehiclesToMoveCounter = 0;
+        for (int i = 0; i < totalVehicles; i++)
+        {
+            if (shouldMove_moveVehicle[i])
+            {
+                if (vehicles_moveVehicle[i].gameObject.activeSelf)
+                {
+                    unitposition_moveVehicle_Native[vehiclesToMoveCounter] = vehicles_moveVehicle[i].position;
+                    destination_moveVehicle_Native[vehiclesToMoveCounter] = destination_moveVehicle[i];
+                    unitforward_moveVehicle_Native[vehiclesToMoveCounter] = vehicles_moveVehicle[i].rotation;
+                    unitVelocity_moveVehicle_Native[vehiclesToMoveCounter] = unitVelocity_moveVehicle[i];
+                    unitMaxSpeed_moveVehicle_Native[vehiclesToMoveCounter] = unitMaxSpeed_moveVehicle[i];
+                    unitTurnSpeed_moveVehicle_Native[vehiclesToMoveCounter] = unitTurnSpeed_moveVehicle[i];
+                    deltaTime_moveVehicle_Native[vehiclesToMoveCounter] = updateTimestep;
+                    acceleration_moveVehicle_Native[vehiclesToMoveCounter] = acceleration_moveVehicle[i];
+                    atDestination_moveVehicle_Native[vehiclesToMoveCounter] = false;
+                    vehiclesToMoveCounter++;
+                }
+                else
+                {
+                    shouldMove_moveVehicle[i] = false;
+                }
+
+            }
+
+        }
+        //UnityEngine.Debug.Log("moveturrets got here3");
+
+        moveVehicles = new MoveVehicles {
+
+            unitposition = unitposition_moveVehicle_Native,
+            targetposition = destination_moveVehicle_Native,
+            unitforward = unitforward_moveVehicle_Native,
+            unitVelocity = unitVelocity_moveVehicle_Native,
+            unitMaxSpeed = unitMaxSpeed_moveVehicle_Native,
+            unitTurnSpeed = unitTurnSpeed_moveVehicle_Native,
+            deltaTime = deltaTime_moveVehicle_Native,
+            acceleration = acceleration_moveVehicle_Native,
+            atTarget = atDestination_moveVehicle_Native,
+
+
+        };
+
+
+
+        moveVehiclesJobHandle = moveVehicles.Schedule(vehiclesToMove, 4);
+        moveVehiclesJobHandle.Complete();
+        //  Debug.Log("moveTurretJobHandle is done");
+
+        vehiclesToMoveCounter = 0;
+        for (int i = 0; i < totalVehicles; i++)
+        {
+            if (shouldMove_moveVehicle[i])
+            {
+                vehicles_moveVehicle[i].position = moveVehicles.unitposition[vehiclesToMoveCounter];
+                vehicles_moveVehicle[i].rotation = moveVehicles.unitforward[vehiclesToMoveCounter];
+                unitVelocity_moveVehicle[i] = moveVehicles.unitVelocity[vehiclesToMoveCounter];
+                if (moveVehicles.atTarget[vehiclesToMoveCounter])
+                {
+                }
+                vehiclesToMoveCounter++;
+                if (vehiclesToMoveCounter > vehiclesToMove)
+                {
+                    break;
+                }
+            }
+        }
+        //  Debug.Log("gave movement orders to turrets");
+        // UnityEngine.Debug.Log("moveturrets got here5");
+
+        shouldMove_moveVehicle_Native.Dispose();
+        unitposition_moveVehicle_Native.Dispose();
+        destination_moveVehicle_Native.Dispose();
+        unitforward_moveVehicle_Native.Dispose();
+        unitVelocity_moveVehicle_Native.Dispose();
+        unitMaxSpeed_moveVehicle_Native.Dispose();
+        unitTurnSpeed_moveVehicle_Native.Dispose();
+        deltaTime_moveVehicle_Native.Dispose();
+        acceleration_moveVehicle_Native.Dispose();
+        atDestination_moveVehicle_Native.Dispose();
+        shouldCheckDistance_moveVehicle_Native.Dispose();
+
+    }
     void MoveTransforms() {
-       
+
         NativeArray<bool> shouldMove_moveTransform_Native = new NativeArray<bool>(transformsToMove, Allocator.TempJob);
         NativeArray<bool> atDestination_moveTransform_Native = new NativeArray<bool>(transformsToMove, Allocator.TempJob);
         NativeArray<float> speed_moveTransform_Native = new NativeArray<float>(transformsToMove, Allocator.TempJob);
@@ -461,7 +602,7 @@ public class JobManager : MonoBehaviour
         }
 
         performanceTimer.Stop();
-      //  UnityEngine.Debug.Log("PerformanceTimer, transfer from normal to native array:  " + performanceTimer.Elapsed.TotalMilliseconds);
+        //  UnityEngine.Debug.Log("PerformanceTimer, transfer from normal to native array:  " + performanceTimer.Elapsed.TotalMilliseconds);
         performanceTimer.Restart();
 
         moveTransforms = new MoveTransforms {
@@ -471,7 +612,6 @@ public class JobManager : MonoBehaviour
             destination = destination_moveTransform_Native,
             speed = speed_moveTransform_Native,
             timeStep = timeStep_moveTransform_Native,
-            shouldMove = shouldMove_moveTransform_Native,
             atDestination = atDestination_moveTransform_Native,
             shouldCheckDistance = shouldCheckDistance_moveTransform_Native,
         };
@@ -519,17 +659,12 @@ public class JobManager : MonoBehaviour
     }
 
     void LookForTargets() {
-        if (numberOfUnitsToLookForTarget == 400)
-        {
-            numberOfUnitsToLookForTarget = 0;
-        }
-        if (numberOfUnitsToLookForTarget > 0)
-        {
-
+  
+    
             NativeArray<int> faction_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
             NativeArray<bool> isMilitary_LookforTarget_Native = new NativeArray<bool>(totalNumberOfTargets, Allocator.TempJob);
-            NativeArray<float3> unitPosition_LookforTarget_Native = new NativeArray<float3>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<float3> targetPositions_LookforTarget_Native = new NativeArray<float3>(totalNumberOfTargets, Allocator.TempJob);
+            NativeArray<float2> unitPosition_LookforTarget_Native = new NativeArray<float2>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+            NativeArray<float2> targetPositions_LookforTarget_Native = new NativeArray<float2>(totalNumberOfTargets, Allocator.TempJob);
             NativeArray<int> factionTargetCount_LookforTarget_Native = new NativeArray<int>(numberOfPlayers, Allocator.TempJob);
             NativeArray<int> closestMilitaryTarget_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
             NativeArray<int> closestNonMilitaryTarget_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
@@ -541,7 +676,7 @@ public class JobManager : MonoBehaviour
 
             for (int i = 0; i < numberOfUnitsToLookForTarget; i++)
             {
-   
+
                 faction_LookforTarget_Native[i] = unitsToLookForTarget[i].faction;
 
                 currentDistance_LookforTarget_Native[i] = 10000;
@@ -550,13 +685,17 @@ public class JobManager : MonoBehaviour
 
                 range_LookforTarget_Native[i] = unitRange[i];
 
-                unitPosition_LookforTarget_Native[i] = unitsToLookForTarget[i].gameObject.transform.position;
+           
 
-                //  Debug.Log("faction " + faction[i] + " postition " + unitposition[i]);
-            }
+                    unitPosition_LookforTarget_Native[i] = new Vector2(unitsToLookForTarget[i].gameObject.transform.position.x, unitsToLookForTarget[i].gameObject.transform.position.z);
 
-   
-            for (int i = 0; i < totalNumberOfTargets; i++)
+         //   UnityEngine.Debug.Log( unitsToLookForTarget[i].gameObject.name + " looking");
+
+            //  Debug.Log("faction " + faction[i] + " postition " + unitposition[i]);
+        }
+
+
+        for (int i = 0; i < totalNumberOfTargets; i++)
             {
 
                 targetPositions_LookforTarget_Native[i] = targets[i];
@@ -578,7 +717,7 @@ public class JobManager : MonoBehaviour
 
             }
 
-  
+
             lookForTarget = new LookForTarget {
                 faction = faction_LookforTarget_Native,
                 unitposition = unitPosition_LookforTarget_Native,
@@ -595,66 +734,73 @@ public class JobManager : MonoBehaviour
             };
 
 
- 
+
             lookForTargetJobHandle = lookForTarget.Schedule(numberOfUnitsToLookForTarget, 1);
             lookForTargetJobHandle.Complete();
 
 
             for (int i = 0; i < numberOfUnitsToLookForTarget - 1; i++)
             {
-     
+
                 if (closestMilitaryTarget_LookforTarget_Native[i] != 1000)
                 {
 
 
                     //  unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().Attack(currentTarget);
-                 
+               
                         unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().Attack(target[lookForTarget.closestMilitaryTarget[i]].gameObject);
                         // Debug.Log("FINAL ASSIGNMENT unit " + unitsToLookForTarget[i].gameObject.name + " is targeting " + target[lookForTarget.closestMilitaryTarget[i]].gameObject);
+                    
 
-                 
                     // Debug.Log("FINAL ASSIGNMENT unit " + unitsToLookForTarget[i].gameObject.name + " is targeting " + target[lookForTarget.closestMilitaryTarget[i]].gameObject);
 
 
                 }
                 else
                 {
-                  //  unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().TargetGone();
+                   // unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().TargetGone();
                 }
                 //   Debug.Log(unitsToLookForTarget[i].gameObject.name + " found target with unit number " + lookForTarget.closestTarget[i]);
             }
 
-        }
-        numberOfUnitsToLookForTarget = 0;
-        faction_LookforTarget_Native.Dispose();
-        unitPosition_LookforTarget_Native.Dispose();
-        targetPositions_LookforTarget_Native.Dispose();
-        factionTargetCount_LookforTarget_Native.Dispose();
-        closestMilitaryTarget_LookforTarget_Native.Dispose();
-        closestNonMilitaryTarget_LookforTarget_Native.Dispose();
-        isMilitary_LookforTarget_Native.Dispose();
-        currentDistance_LookforTarget_Native.Dispose();
-        minDistance_LookforTarget_Native.Dispose();
-        stopCounting_LookforTarget_Native.Dispose();
-        startCountingAgain_LookforTarget_Native.Dispose();
-        range_LookforTarget_Native.Dispose();
 
+            numberOfUnitsToLookForTarget = 0;
+            faction_LookforTarget_Native.Dispose();
+            unitPosition_LookforTarget_Native.Dispose();
+            targetPositions_LookforTarget_Native.Dispose();
+            factionTargetCount_LookforTarget_Native.Dispose();
+            closestMilitaryTarget_LookforTarget_Native.Dispose();
+            closestNonMilitaryTarget_LookforTarget_Native.Dispose();
+            isMilitary_LookforTarget_Native.Dispose();
+            currentDistance_LookforTarget_Native.Dispose();
+            minDistance_LookforTarget_Native.Dispose();
+            stopCounting_LookforTarget_Native.Dispose();
+            startCountingAgain_LookforTarget_Native.Dispose();
+            range_LookforTarget_Native.Dispose();
+
+        
     }
 
 
     // Update is called once per frame
-  
+
 }
 [BurstCompile]
 
 public struct MoveTransforms : IJobParallelFor
 {
+
+
     public NativeArray<float3> position;
+    [ReadOnly]
     public NativeArray<float3> destination;
+    [ReadOnly]
     public NativeArray<float> speed;
+    [ReadOnly]
     public NativeArray<float3> direction;
+    [ReadOnly]
     public NativeArray<float> timeStep;
-    public NativeArray<bool> shouldMove;
+    [ReadOnly]
     public NativeArray<bool> shouldCheckDistance;
     public NativeArray<bool> atDestination;
     public void Execute(int index) {
@@ -684,26 +830,35 @@ public struct MoveTurrets : IJobParallelFor
     public NativeArray<float3> unitposition;
     [ReadOnly]
     public NativeArray<float3> targetposition;
-    public NativeArray<float3> gunForward;
-    public NativeArray<float3> turretForward;
+    public NativeArray<quaternion> gunRotation;
+    public NativeArray<quaternion> turretRotation;
     [ReadOnly]
+
     public NativeArray<float> deltaTime;
-    [ReadOnly]
+   
+
     public NativeArray<float> rotationspeed;
     public NativeArray<bool> canfire;
     [ReadOnly]
     public NativeArray<bool> checkDistance;
-    public NativeArray<bool> inRange;
     public void Execute(int index) {
 
         rotationspeed[index] *= deltaTime[index];
+        Vector3 turretForward = math.forward(turretRotation[index]);
+        Vector3 gunForward = math.forward(gunRotation[index]);
+
         float3 direction = math.normalize(targetposition[index] - unitposition[index]);
-        turretForward[index] = math.lerp(turretForward[index], new float3(direction.x, 0, direction.z), rotationspeed[index]);
-        gunForward[index] = math.lerp(gunForward[index], new float3(0, direction.y, 0), rotationspeed[index]);
-        gunForward[index] = new float3(turretForward[index].x, gunForward[index].y, turretForward[index].z);
+
+
+        turretForward = math.lerp(turretForward, new float3(direction.x, 0, direction.z), rotationspeed[index]);
+        gunForward = math.lerp(gunForward, new float3(0, direction.y, 0), rotationspeed[index]);
+        gunForward = new float3(turretForward.x, gunForward.y, turretForward.z);
+        turretRotation[index] = quaternion.LookRotation(turretForward, new float3(0, 1, 0));
+        gunRotation[index] = quaternion.LookRotation(gunForward, new float3(0, 1, 0));
+
         if (checkDistance[0])
         {
-            if (math.distance(turretForward[index], direction) < 0.1f)
+            if (math.distance(turretForward, direction) < 0.1f)
             {
                 canfire[index] = true;
 
@@ -717,41 +872,64 @@ public struct MoveTurrets : IJobParallelFor
 
     }
 }
-public struct moveVehicles : IJobParallelFor
+//[BurstCompile]
+
+public struct MoveVehicles : IJobParallelFor
 {
     public NativeArray<float3> unitposition;
     public NativeArray<float3> targetposition;
-    public NativeArray<float3> unitforward;
-    public NativeArray<float3> unitVelocity;
+    public NativeArray<quaternion> unitforward;
+    public NativeArray<float> unitVelocity;
     public NativeArray<float> unitMaxSpeed;
     public NativeArray<float> unitTurnSpeed;
     public NativeArray<float> deltaTime;
     public NativeArray<float> acceleration;
-    public NativeArray<float> dampening;
     public NativeArray<bool> atTarget;
 
 
     public void Execute(int index) {
         unitTurnSpeed[index] *= deltaTime[index];
         unitMaxSpeed[index] *= deltaTime[index];
+        acceleration[index] *= deltaTime[index];
 
-        //turn the unit 
+        targetposition[index] = new float3(targetposition[index].x, 0, targetposition[index].z);
+        unitposition[index] = new float3(unitposition[index].x, 0, unitposition[index].z);
+
         float3 direction = math.normalize(targetposition[index] - unitposition[index]);
-        unitforward[index] = math.lerp(unitforward[index], new float3(direction.x, 0, direction.z), unitTurnSpeed[index]);
-        if (math.distance(unitforward[index], direction) < 0.5f)// if the vehicle is facing the target
-        {
-            unitVelocity[index] += unitforward[index] * acceleration[index] * deltaTime[index];
-            unitVelocity[index] *= dampening[index];
-        }
+        float3 forward = math.forward(unitforward[index]);
+        unitforward[index] = math.slerp(unitforward[index],quaternion.LookRotation(direction,new float3(0,1,0)), unitTurnSpeed[index]);
+   
+
         float distanceToTarget = math.distance(unitposition[index], targetposition[index]);
         if (distanceToTarget < 5)// if the vehicle is facing the target
         {
-            unitVelocity[index] *= 0.5f;
+            unitVelocity[index] *= 0.7f;
+        }
+        else
+        {
+            if (unitVelocity[index] < unitMaxSpeed[index])
+            {
+                unitVelocity[index] += acceleration[index];
+            }
+
         }
         if (distanceToTarget < 1)// if the vehicle is facing the target
         {
-            unitVelocity[index] *= 0.1f;
+            unitVelocity[index] *= 0.2f;
             atTarget[index] = true;
+        }
+        float directionDistance = math.distance(forward, direction);
+        if (directionDistance < 0.8f)
+        {
+
+            unitposition[index] += unitVelocity[index] * forward;
+        } else if(directionDistance > 1.5f) {
+            unitposition[index] -= unitVelocity[index] * forward;
+
+        }
+        else
+        {
+            unitVelocity[index] = 0;
         }
     }
 
@@ -764,11 +942,11 @@ public struct LookForTarget : IJobParallelFor
     [ReadOnly]
     public NativeArray<int> faction;
     [ReadOnly]
-    public NativeArray<float3> unitposition;
+    public NativeArray<float2> unitposition;
     [ReadOnly]
     public NativeArray<bool> isMilitary;
     [ReadOnly]
-    public NativeArray<float3> targetpositions;
+    public NativeArray<float2> targetpositions;
     [ReadOnly]
     public NativeArray<int> factionTargetCount;
     [ReadOnly]
@@ -783,7 +961,6 @@ public struct LookForTarget : IJobParallelFor
     public NativeArray<float> minDistance;
     public void Execute(int index) {
         // Debug.Log("look for target11");
-
         for (int i = 0; i < targetpositions.Length; i++)
         {
             if (i < stopCounting[faction[index]] || i > startCountingAgain[faction[index]])
@@ -796,6 +973,10 @@ public struct LookForTarget : IJobParallelFor
                         {
                             minDistance[index] = currentDistance[index];
                             closestMilitaryTarget[index] = i;
+                            if (currentDistance[index] < range[index])
+                            {
+                                return;
+                            }
                         }
                         else
                         {

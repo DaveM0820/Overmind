@@ -53,7 +53,7 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
     float updateTimestep = 0.5f;
     int currentOrder = 0;
     int LookForTargetsCounter = 0;
-    int LookForTargetsCounterMax = 20;
+    int LookForTargetsCounterMax = 30;
     Unit thisUnit;
     int unitRange;
     int turretNumber;
@@ -114,8 +114,10 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
             {
                 if (LookForTargetsCounter > LookForTargetsCounterMax)
                 {
-                jobManager.LookForTarget(thisUnit, unitRange);
-
+                    if (!unitBehaviour.hasTarget)
+                    {
+                        jobManager.LookForTarget(thisUnit, unitRange);
+                    }
                 }
             
             }
@@ -136,7 +138,11 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
         walkoutpoint = transform.position;
 
         jobManager = player.GetComponent<JobManager>();
+        if (hasTurret)
+        {
+      
         jobManager.AddTurretToMove(gameObject, turret, gun, turretRotationSpeed);
+        }
         unitBehaviour = gameObject.GetComponent<UnitBehaviour>();
 
         unitRange = unitBehaviour.unitRange;

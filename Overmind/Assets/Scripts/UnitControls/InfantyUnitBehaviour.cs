@@ -394,7 +394,7 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
             }
             if (LookForTargetsCounter > LookForTargetsCounterMax)
             {
-                if (!unitBehaviour.attackMoveEnabled)
+                if (!unitBehaviour.attackMoveEnabled && !unitBehaviour.hasTarget)
                 {
                     jobManager.LookForTarget(thisUnit, unitRange);
                 }
@@ -875,8 +875,9 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
         animator.SetBool("Moving", false);
         animator.SetBool("Attacking", false);
         animator.SetBool("DirectControl", false);
+        currentOrder = 0;
 
-        unitBehaviour.orderQueue.Clear();
+        unitBehaviour.ClearAllOrders();
 
     }
 }

@@ -20439,6 +20439,7 @@ MonoBehaviour:
   hpChange: 0
   currentTarget: {fileID: 0}
   evading: 0
+  hasTarget: 0
   orderLine:
     m_lineVertices: []
     m_lineUVs: []
@@ -20611,6 +20612,7 @@ MonoBehaviour:
   turretNumber: 0
   canFire: 0
   vehicleNumber: 0
+  hasTurret: 1
   directMove: 0
 --- !u!114 &1678037739743372347
 MonoBehaviour:
