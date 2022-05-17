@@ -2,266 +2,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Animations.Rigging;
 using Unity.Jobs;
+using System.Diagnostics;
 
-/*
-public struct InfantryAttack : IJob
-{
-    public GameObject currentTarget;
-            public GameObject target;
-            public Animator animator;
-            public UnitBehaviour targetUnitBehaviour;
-            public float distance;
-            public Transform transform;
-            public float targetCenterY;
-            public Vector3 directionToTarget;
-            public int distanceCheckCount;
-            public bool targetUnderDirectControl;
-            public float unitRange;
-            public UnitBehaviour unitBehaviour;
-            public float currentAccuracy;
-            public float accuracy;
-            public Transform barrel;
-            public float evadeChance;
-            public bool evading;
-            public Vector3 evadeVector;
-            public bool crouching;
-            public Vector3 velocity;
-            public float weaponRecharge;
-            public float updateTimestep;
-            public float weaponRechargeRate;
-            public float rand;
-            public GameObject rifleshot;
-            public ParticleSystem muzzleFlash;
-            public RifleShot rifleShotScript;
-    public int damagePerShot;
-    public GameObject[] hitEffectMetalArray;
-    public ParticleSystem[] hitEffectMetalParticle;
-
-    public GameObject[] hitEffectGroundArray;
-    public ParticleSystem[] hitEffectGroundParticle;
-    //public int number;
-    public void Execute() {
-        //  number++;
-
-
-        if (currentTarget != target)
-        {
-
-            animator.SetBool("Attacking", true);
-
-            targetUnitBehaviour = target.GetComponent<UnitBehaviour>();
-
-            currentTarget = target;
-            distance = Vector3.Distance(transform.position, target.transform.position);
-            targetCenterY = targetUnitBehaviour.headHeight / 2;
-            directionToTarget = new Vector3(target.transform.position.x, 0, target.transform.position.z) - transform.position;
-            transform.forward = new Vector3(directionToTarget.x, 0, directionToTarget.z);
-            transform.Rotate(Vector3.up, 28);
-            targetUnderDirectControl = targetUnitBehaviour.assumingDirectControl;
-
-        }
-        distanceCheckCount++;
-
-        if (distanceCheckCount > 15)
-        {
-            if (!target.activeInHierarchy)
-            {
-                unitBehaviour.targetGone();
-
-            }
-            distanceCheckCount = 0;
-            distance = Vector3.Distance(transform.position, target.transform.position);
-            if (distance > unitRange || targetUnitBehaviour.hp <= 0)
-            {
-                unitBehaviour.targetGone();
-            }
-            if (distance < unitRange * 0.2f)
-            {
-                currentAccuracy = 0.9f;
-            }
-            else
-            {
-                currentAccuracy = accuracy;
-            }
-            if (targetUnitBehaviour.evading)
-            {
-                currentAccuracy *= 0.5f;
-            }
-            if (targetUnitBehaviour.isBuilding)
-            {
-                currentAccuracy = 1;
-
-            }
-            directionToTarget = -(transform.position - new Vector3(target.transform.position.x, targetCenterY, target.transform.position.z));
-
-            rand = Random.Range(-0.5f, 0.5f);
-            transform.forward = new Vector3(directionToTarget.x, 0, directionToTarget.z);
-            transform.Rotate(Vector3.up, 25);
-            if (UnityEngine.Random.Range(0f, 1f) > 0.5)
-            {
-
-                evading = true;
-                int random = Random.Range(0, 6);
-                evadeVector = new Vector3(0, 0, 0);
-                unitBehaviour.evading = true;
-
-                if (!crouching)
-                {
-
-                    if (random == 1)
-                    {
-                        evadeVector = new Vector3(0.15f, 0, 0);
-                        animator.SetTrigger("StrafeRight");
-
-                    }
-                    else if (random == 2)
-                    {
-                        evadeVector = new Vector3(-0.15f, 0, 0);
-                        animator.SetTrigger("StrafeLeft");
-
-
-                    }
-                    else if (random == 3)
-                    {
-                        ///   evadeVector = new Vector3(0, 0, -0.10f);
-                        //animator.SetTrigger("StrafeBack");
-
-                    }
-                    else if (random == 4)
-                    {
-                        evadeVector = new Vector3(0, 0, 0.2f);
-
-                        animator.SetTrigger("StrafeForward");
-                    }
-                    else if (random == 5)
-                    {
-                        crouching = true;
-                        animator.SetBool("Crouching", true);
-
-                    }
-                }
-                else
-                {
-
-                    if (random == 1)
-                    {
-                        evadeVector = new Vector3(-0.15f, 0, 0);
-                        animator.SetTrigger("StrafeRight");
-
-                    }
-                    else if (random == 2)
-                    {
-                        evadeVector = new Vector3(0.15f, 0, 0);
-                        animator.SetTrigger("StrafeLeft");
-
-
-                    }
-                    else if (random == 3)
-                    {
-                        //    evadeVector = new Vector3(0, 0, -0.10f);
-                        //   animator.SetTrigger("StrafeBack");
-
-                    }
-                    else if (random == 4)
-                    {
-                        //   evadeVector = new Vector3(0, 0, -0.20f);
-
-                        //  animator.SetTrigger("StrafeForward");
-
-                    }
-                    else if (random == 5)
-                    {
-                        crouching = false;
-                        animator.SetBool("Crouching", false);
-
-                    }
-
-                }
-
-                velocity = transform.rotation * evadeVector;
-
-
-
-            }
-
-        }
-
-
-
-        weaponRecharge += updateTimestep;
-        if (weaponRecharge > weaponRechargeRate * rand)
-        {
-
-            muzzleFlash.Play();
-            weaponRecharge = 0;
-
-
-            if (Random.Range(0f, 1f) < accuracy)
-            {
-
-                for (int i = 0; i < 4; i++)
-                {
-                    if (!hitEffectMetalArray[i].activeInHierarchy)
-                    {
-                        hitEffectMetalArray[i].SetActive(true);
-                        hitEffectMetalArray[i].transform.position = target.transform.position + new Vector3(Random.Range(0.2f * targetCenterY, 0.2f * targetCenterY), Random.Range(0.5f, targetCenterY * 2), Random.Range(0.2f * targetCenterY, 0.2f * targetCenterY));
-                        hitEffectMetalArray[i].transform.forward = directionToTarget;
-                        hitEffectMetalParticle[i].Play();
-                        targetUnitBehaviour.changeHP(-damagePerShot);
-                        if (targetUnitBehaviour.hp <= 0)
-                        {
-                            unitBehaviour.OrderComplete();
-                            unitBehaviour.currentTarget = null;
-
-                        }
-                        i = 7;
-
-                    }
-
-                }
-
-            }
-            else
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    if (!hitEffectGroundArray[i].activeSelf)
-                    {
-                        hitEffectGroundArray[i].SetActive(true);
-                        hitEffectGroundArray[i].transform.position = target.transform.position + new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f));
-                        hitEffectGroundParticle[i].Play();
-                        i = 7;
-                    }
-
-                }
-            }
-
-
-
-
-        }
-
-
-        if (evading)
-        {
-            transform.position += velocity;
-            velocity *= 0.98f;
-            if (velocity.magnitude <= 0.07f)
-            {
-                evading = false;
-                unitBehaviour.evading = false;
-
-
-            }
-        }
-    }
-
-}
-
-
-*/
 public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
 {
+    public Stopwatch performanceTimer = new Stopwatch();
 
     public bool currentlyBuilding;
     private GameObject building;
@@ -303,10 +48,11 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
     public bool snappedLeft;
     public UnitBehaviour unitBehaviour;
     public GameObject rifleShotPrefab;
+    public SkinnedMeshRenderer lod0;
     GameObject[] rifleShots;
     RifleShot[] rifleShotScript;
-    float weaponRecharge;
-    public float weaponRechargeRate;
+    float weaponReloadProgress;
+    public float weaponReloadTime;
     public float accuracy;
     public ParticleSystem muzzleFlash;
     public Transform barrel;
@@ -330,12 +76,8 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
     float moveSpeed;
     Vector3 moveDirection;
     JobManager jobManager;
-    public GameObject hitEffectMetal;
-    public GameObject hitEffectGround;
-    GameObject[] hitEffectMetalArray;
-    GameObject[] hitEffectGroundArray;
-    ParticleSystem[] hitEffectMetalParticle;
-    ParticleSystem[] hitEffectGroundParticle;
+    public ParticleSystem hitEffectMetalParticle;
+    public ParticleSystem hitEffectGroundParticle;
     Vector3 currentMoveTarget;
 
     Unit thisUnit;
@@ -344,8 +86,9 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
     int currentOrder;
     bool hasTarget;
     int LookForTargetsCounter;
-    int LookForTargetsCounterMax = 30;
+    int LookForTargetsCounterMax = 40;
     int transformNumber;
+    public ParticleSystem shot;
     // Start is called before the first frame update
     void Update() // updates every updateTimeStep, initally set by updateFPS in GlobalGameInformation. This way the framerate of units can be increased or decreased depending on current performance.
     {
@@ -411,22 +154,14 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
     }
     void Awake() {
 
-        hitEffectMetalArray = new GameObject[4];
-        hitEffectGroundArray = new GameObject[4];
-        hitEffectMetalParticle = new ParticleSystem[4];
-        hitEffectGroundParticle = new ParticleSystem[4];
+
         unitMeshAndRig = transform.Find("LOD0").gameObject;
         animator = unitMeshAndRig.GetComponent<Animator>();
-
         player = GameObject.Find("/XR Rig");
         evadeChance = 0.98f;
         updateTimestep = player.GetComponent<GlobalGameInformation>().updateTimestep;
-       // unitBehaviour = gameObject.GetComponent<UnitBehaviour>();
-      
- 
-
-        animator = transform.Find("LOD0").gameObject.GetComponent<Animator>();
-        isMoving = false;
+        // unitBehaviour = gameObject.GetComponent<UnitBehaviour>();
+           isMoving = false;
         velocity = new Vector3(0, 0, 0);
         //vr stuff
         vrTargetLeftHand = GameObject.Find("/XR Rig/Camera Offset/LeftHand Controller/VRTargetLeftHand").transform;
@@ -440,15 +175,7 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
         defaultGunRotation = gun.transform.localRotation;
         moveSpeed = unitBehaviour.moveSpeed;
         jobManager = player.GetComponent<JobManager>();
-        for (int i = 0; i < 4; i++)
-        {
-            hitEffectMetalArray[i] = Instantiate(hitEffectMetal, transform.root);
-            hitEffectGroundArray[i] = Instantiate(hitEffectGround, transform.root);
-            hitEffectMetalParticle[i] = hitEffectMetalArray[i].GetComponent<ParticleSystem>();
-            hitEffectGroundParticle[i] = hitEffectGroundArray[i].GetComponent<ParticleSystem>();
-            hitEffectMetalArray[i].SetActive(false);
-            hitEffectGroundArray[i].SetActive(false);
-        }
+
     }
     // private JobHandle InfantryAttackJob() {
     //      InfantryAttack job = new InfantryAttack();
@@ -456,6 +183,8 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
     //  }
 
     public void Attack(GameObject target) {
+        performanceTimer.Start();
+
         currentOrder = 3;
         if (currentTarget != target)
         {
@@ -463,7 +192,7 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
             animator.SetBool("Attacking", true);
 
             targetUnitBehaviour = target.GetComponent<UnitBehaviour>();
-
+            
             currentTarget = target;
             distance = Vector3.Distance(transform.position, target.transform.position);
             targetCenterY = targetUnitBehaviour.headHeight / 2;
@@ -474,7 +203,6 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
 
         }
         distanceCheckCount++;
-
         if (distanceCheckCount > 30)
         {
        
@@ -505,13 +233,16 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
             }
             directionToTarget = -(transform.position - new Vector3(target.transform.position.x, targetCenterY, target.transform.position.z));
 
-            rand = Random.Range(0f, 2f);
+            rand = Random.Range(-0.5f, 1f);
             transform.forward = new Vector3(directionToTarget.x, 0, directionToTarget.z);
             transform.Rotate(Vector3.up, 25);
-            if (UnityEngine.Random.Range(0f, 1f) > 0.5)
+        //    gameObject.GetComponent<LOD>().
+            if (lod0.isVisible && UnityEngine.Random.Range(0f, 1f) > 0.5)
             {
+                //performanceTimer.Restart();
                 Evade();
 
+                //UnityEngine.Debug.Log("PerformanceTimer,");
 
             }
 
@@ -519,55 +250,58 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
 
 
 
-        weaponRecharge += updateTimestep;
-        if (weaponRecharge > weaponRechargeRate * rand)
+        reloadProgress += updateTimestep;
+        if (reloadProgress > weaponReloadTime + rand)
         {
 
             muzzleFlash.Play();
-            weaponRecharge = 0;
+
+            reloadProgress = 0;
 
 
             if (Random.Range(0f, 1f) < accuracy)
             {
-
-                for (int i = 0; i < 4; i++)
-                {
-                    if (!hitEffectMetalArray[i].activeInHierarchy)
-                    {
-                        hitEffectMetalArray[i].SetActive(true);
-                        hitEffectMetalArray[i].transform.position = target.transform.position + new Vector3(Random.Range(0.2f * targetCenterY, 0.2f * targetCenterY), Random.Range(0.5f, targetCenterY * 2), Random.Range(0.2f * targetCenterY, 0.2f * targetCenterY));
-                        hitEffectMetalArray[i].transform.forward = directionToTarget;
-                        hitEffectMetalParticle[i].Play();
-                        targetUnitBehaviour.changeHP(-damagePerShot);
+                Vector3 hitPosition = target.transform.position + new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(0.5f, targetCenterY * 2), Random.Range(-0.1f, 0.1f));
+                
+                jobManager.newProjectile(shot, hitEffectMetalParticle, shot.transform.position, target.transform.position, targetUnitBehaviour, 0, damagePerShot,150f,true);
+          
+                        
                         if (targetUnitBehaviour.hp <= 0)
                         {
                             unitBehaviour.OrderComplete();
                             unitBehaviour.currentTarget = null;
 
                         }
-                        i = 7;
+                  
 
-                    }
+                    
 
-                }
+                
 
             }
-            else
+            else//if miss
             {
-                for (int i = 0; i < 4; i++)
+                if (Random.Range(0, 1) == 0)
                 {
-                    if (!hitEffectGroundArray[i].activeSelf)
-                    {
-                        hitEffectGroundArray[i].SetActive(true);
-                        hitEffectGroundArray[i].transform.position = target.transform.position + new Vector3(Random.Range(-1f, 1f), 0, Random.Range(-1f, 1f));
-                        hitEffectGroundParticle[i].Play();
-                        i = 7;
-                    }
+                    Vector3 hitPosition = target.transform.position + new Vector3(Random.Range(-0.2f, 0.2f), 0, Random.Range(-0.2f, 0.2f));
+
+                    jobManager.newProjectile(shot, hitEffectGroundParticle, shot.transform.position, target.transform.position,null, 0, 0, 150f, false);
+
+                    //hit ground
+
+                }
+                else
+                {
+                    Vector3 hitPosition = target.transform.position + new Vector3(Random.Range(-0.2f, 0.2f), 0, Random.Range(-0.2f, 0.2f));
+
+                    jobManager.newProjectile(shot, hitEffectGroundParticle, shot.transform.position, target.transform.position, null, 0, 0, 150f, false);
+
+
 
                 }
             }
 
-
+       
 
 
         }
@@ -813,10 +547,10 @@ public class InfantyUnitBehaviour : MonoBehaviour, IUnitActionInterface
             animator.SetTrigger("StrafeForward");
         }
         rightTriggerValue = rightTrigger.action.ReadValue<float>();
-        weaponRecharge += Time.deltaTime;
-        if (rightTriggerValue >= 0.75f && weaponRecharge > weaponRechargeRate / 4)
+        reloadProgress += Time.deltaTime;
+        if (rightTriggerValue >= 0.75f && reloadProgress > weaponReloadTime / 4)
         {
-            weaponRecharge = 0;
+            reloadProgress = 0;
             for (int i = 0; i < 4; i++)
             {
                 if (!rifleShots[i].activeSelf)

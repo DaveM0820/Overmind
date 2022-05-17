@@ -328,7 +328,7 @@ public class Select : MonoBehaviour
             VectorLine.Destroy(ref unitBehaviour.rangeCircle);
             VectorLine circle = new VectorLine("range", new List<Vector3>(), 6f, LineType.Continuous);
             circle.SetColor(Color.red);
-            circle.MakeCircle(unit.transform.position, Vector3.up, unitBehaviour.unitRange, 10);
+          //  circle.MakeCircle(unit.transform.position, Vector3.up, unitBehaviour.unitRange, 10);
             circle.Draw3DAuto();
             selectedUnitUILines.Add(circle);
             unitBehaviour.rangeCircle = circle;

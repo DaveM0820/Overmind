@@ -52,14 +52,16 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
     public bool hasTurret;
     float updateTimestep = 0.5f;
     int currentOrder = 0;
-    int LookForTargetsCounter = 0;
-    int LookForTargetsCounterMax = 30;
+    int LookForTargetsCounter = 20;
+    int LookForTargetsCounterMax = 20;
     Unit thisUnit;
     int unitRange;
     int turretNumber;
-    float recharge = 0;
-    public float rechargeTime;
+    float reloadProgress = 0;
     public ParticleSystem muzzleFlash;
+    public ParticleSystem shot;
+    public ParticleSystem shotexplosion;
+    public int damagePerShot;
     public bool canShoot;
     void Update() // updates every updateTimeStep, initally set by updateFPS in GlobalGameInformation. This way the framerate of units can be increased or decreased depending on current performance.
    {
@@ -112,11 +114,13 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
             }
             if (hasTurret)
             {
-                if (LookForTargetsCounter > LookForTargetsCounterMax)
+                if (LookForTargetsCounter >= LookForTargetsCounterMax)
                 {
                     if (!unitBehaviour.hasTarget)
                     {
                         jobManager.LookForTarget(thisUnit, unitRange);
+                        LookForTargetsCounter = 0;
+
                     }
                 }
             
@@ -151,6 +155,7 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
 
 
         turretNumber = unitBehaviour.turretNumber;
+        jobManager.LookForTarget(thisUnit, unitRange);
     }
 
     public void Move(Vector3 location) {
@@ -165,13 +170,17 @@ public class BuildingBehaviour : MonoBehaviour, IUnitActionInterface
             currentOrder = 3;
         }
    
-            recharge += updateTimestep;
+            reloadProgress += updateTimestep;
 
-            if (recharge > rechargeTime)
+            if (reloadProgress > reloadtime)
             {
             if (unitBehaviour.canFire)
             {
+                reloadProgress = 0;
                 muzzleFlash.Play();
+                Vector3 hitPoint = new Vector3(target.transform.position.x + Random.Range(-7f, 7f), 0, target.transform.position.z + Random.Range(-7f, 7f));
+
+                jobManager.newProjectile(shot, shotexplosion, shot.transform.position, hitPoint, null, 10, damagePerShot, 150f, false);
 
 
             }

@@ -20,16 +20,18 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
     GameObject currentTarget;
     public bool hasTurret;
     float updateTimestep = 0.02f;
-    float elapsed;
+    float elapsed = 0;
     int currentOrder = 0;
-    int LookForTargetsCounter = 0;
+    int LookForTargetsCounter = 20;
     int LookForTargetsCounterMax = 20;
     Unit thisUnit;
     int unitRange;
     int turretNumber;
     float recharge = 0;
-    public float rechargeTime;
     public ParticleSystem muzzleFlash;
+    public ParticleSystem explosion;
+    public ParticleSystem shot;
+
     public bool canShoot;
     Vector3 currentMoveTarget;
     int vehicleNumber;
@@ -43,23 +45,33 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
     float moveSpeed;
 
     bool dead = false;
+    bool hasTarget = false;
+    UnitBehaviour targetUnitBehaviour;
+    float distance;
+    float targetCenterY;
+    Vector3 directionToTarget;
+    bool targetUnderDirectControl;
+    int distanceCheckCount = 0;
+    float currentAccuracy;
+    public float accuracy;
+    public int damagePerShot;
+    float spread;
+    public float shotSpeed;
 
-
-
-
-  void Update() // updates every updateTimeStep, initally set by updateFPS in GlobalGameInformation. This way the framerate of units can be increased or decreased depending on current performance.
+    void Update() // updates every updateTimeStep, initally set by updateFPS in GlobalGameInformation. This way the framerate of units can be increased or decreased depending on current performance.
     {
 
         // and there are orders in the orderQueue
         elapsed += Time.deltaTime;
         if (elapsed >= updateTimestep) //run the order every updateTimestep using the UpdateUnit method
         {
-
             elapsed = 0;
+            if (unitBehaviour.hasTarget)
+            {
+                ShootAtTarget(currentTarget);
+            }
             switch (currentOrder)
             {
-                     
-
                 case 1:
                 Move(currentMoveTarget);
                 LookForTargetsCounter++;
@@ -96,11 +108,13 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
                 unitBehaviour.OrderComplete();
                 break;
             }
-            if (LookForTargetsCounter > LookForTargetsCounterMax)
+            if (LookForTargetsCounter >= LookForTargetsCounterMax)
             {
                 if (!unitBehaviour.hasTarget)
                 {
                     jobManager.LookForTarget(thisUnit, unitRange);
+                    LookForTargetsCounter = 0;
+
                 }
             }
         }
@@ -113,7 +127,8 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
         updateTimestep = unitBehaviour.updateTimestep;
         vehicleNumber = unitBehaviour.vehicleNumber;
         turretNumber = unitBehaviour.turretNumber;
-       // unitBehaviour.addOrderToQueue(new Order("move", new Vector3(transform.position.x + 100, 0, transform.position.z + 100)));
+        jobManager.LookForTarget(thisUnit, unitRange);
+        spread = 1 / accuracy;
     }
     void Awake() {
 
@@ -150,28 +165,75 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
         jobManager.AddVehicleToMove(transform, moveSpeed, turnSpeed, acceleration, dampening);
     }
 
+    public void ShootAtTarget(GameObject target) {
+        if (currentTarget != target)
+        {
+            hasTarget = true;
+            unitBehaviour.hasTarget = true;
+            targetUnitBehaviour = target.GetComponent<UnitBehaviour>();
+            currentTarget = target;
+            distance = Vector3.Distance(transform.position, target.transform.position);
+            targetCenterY = targetUnitBehaviour.headHeight / 2;
+            directionToTarget = new Vector3(target.transform.position.x, 0, target.transform.position.z) - transform.position;
+            targetUnderDirectControl = targetUnitBehaviour.assumingDirectControl;
 
+        }
+        distanceCheckCount++;
+
+        if (distanceCheckCount > 30)
+        {
+
+            distanceCheckCount = 0;
+            distance = Vector3.Distance(transform.position, target.transform.position);
+            if (distance > unitRange || targetUnitBehaviour.hp <= 0 || !target.activeInHierarchy)
+            {
+               // currentTarget = null;
+               // unitBehaviour.hasTarget = false;
+                jobManager.LookForTarget(thisUnit, unitRange);
+                return;
+            }
+
+            directionToTarget = -(transform.position - new Vector3(target.transform.position.x, targetCenterY, target.transform.position.z));
+
+
+        }
+
+        recharge += updateTimestep;
+
+        if (recharge > reloadtime)
+        {
+
+            if (unitBehaviour.canFire)
+            {
+                recharge = 0;
+                muzzleFlash.Play();
+                Vector3 hitPoint = new Vector3(target.transform.position.x + Random.Range(-2f-spread, 2f + spread) , 0, target.transform.position.z + Random.Range(-2f - spread, 2f + spread));
+                jobManager.newProjectile(shot, explosion, shot.transform.position, hitPoint, null, 5, damagePerShot, shotSpeed, false);
+
+            }
+        }
+        
+
+    }
     public void Attack(GameObject target) {
+       // Debug.Log("tank got attack order in tankunitbeh");
 
         if (currentTarget != target)
         {
+            hasTarget = true;
+            unitBehaviour.hasTarget = true;
+            targetUnitBehaviour = target.GetComponent<UnitBehaviour>();
             currentTarget = target;
+            distance = Vector3.Distance(transform.position, target.transform.position);
+            targetCenterY = targetUnitBehaviour.headHeight / 2;
+            directionToTarget = new Vector3(target.transform.position.x, 0, target.transform.position.z) - transform.position;
+            targetUnderDirectControl = targetUnitBehaviour.assumingDirectControl;
             jobManager.MoveTurret(turretNumber, target.transform);
+
 
         }
         unitBehaviour.OrderComplete();
 
-        recharge += updateTimestep;
-
-        if (recharge > rechargeTime)
-        {
-            if (unitBehaviour.canFire)
-            {
-                muzzleFlash.Play();
-                recharge = 0;
-            }
-        
-        }
 
 
 
@@ -197,7 +259,7 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
 
     }
     public void Damage() {
-        animator.SetTrigger("Hit");
+     //   animator.SetTrigger("Hit");
 
 
     }
@@ -279,11 +341,15 @@ public class TankUnitBehaviour : MonoBehaviour, IUnitActionInterface
             currentOrder = 1;
 
         }
-        //  transform.position += moveSpeed * transform.forward * updateTimestep;
+        if (unitBehaviour.hasTarget)
+        {
+            ShootAtTarget(currentTarget);
+        }
+            //  transform.position += moveSpeed * transform.forward * updateTimestep;
 
-    }
-    // Update is called once per frame
-    public void Stop() {
+        }
+        // Update is called once per frame
+        public void Stop() {
     //    jobManager.StopMovingVehicle(vehicleNumber);
         unitBehaviour.ClearAllOrders();
         currentOrder = 0;

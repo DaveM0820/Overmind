@@ -46,7 +46,7 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
     bool dead = false;
     int currentOrderTypeNumber;
     float fullFPSTimeStep;
-    public bool hasTarget;
+    public bool hasTarget = false;
     public VectorLine orderLine;
     public VectorLine rangeCircle;
     public Order finalOrder;
@@ -207,19 +207,19 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
 
     }
     public void Attack(GameObject target) {
-        currentTarget = target;
         hasTarget = true;
         if (currentOrderTypeNumber == 1 && attackMoveEnabled)
         {
-            orderQueue[0] = new Order("attack", target, true);
+            orderQueue[0] = new Order(3, target, true);
             currentOrderTypeNumber = 3;
             UpdateUnit();
 
         }
         else
         {
-            addOrderToQueue(new Order("attack", target, true));
-            UpdateUnit();
+
+            addOrderToQueue(new Order(3, target, true));
+          //  Debug.Log(unitType + " current order number " + currentOrderTypeNumber);
         }
     }
     public void TargetGone() {
@@ -229,7 +229,7 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
         {
             jobManager.StopMovingTurret(turretNumber);
         }
-        if (orderQueue[0].orderTypeNumber == 3)
+        if (currentOrderTypeNumber == 3)
         {
             OrderComplete();
         }
@@ -238,8 +238,6 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
         }
     }
     public void ClearAllOrders() {
-        hasTarget = false;
-        currentTarget = null;
         queueIsEmpty = true;
         currentOrderTypeNumber = 0;
         orderQueue.Clear();
@@ -250,7 +248,7 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
 
         if (order.emptyQueue)//should the order delete all preceding orders(IE be executed immediately)
         {
-            OrderComplete();
+
             orderQueue.Clear();
         }
 
@@ -301,8 +299,6 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
     public void OrderComplete() {
         if (orderQueue.Count == 0) // if there is no order to complete
         {
-            hasTarget = false;
-            currentTarget = null;
             queueIsEmpty = true;
             currentOrderTypeNumber = 0;
             action.Stop();
@@ -310,12 +306,6 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
         else
         {
 
-            if (orderQueue[0].orderTypeNumber == 3)// if the order that was completed was an attack order
-            {
-                hasTarget = false;
-                currentTarget = null;
-            
-            }
            // Debug.Log("OrderComplete about to remove order " + currentOrderTypeNumber + " at location " + orderQueue[0].orderPosition);
 
             orderQueue.RemoveRange(0, 1);
@@ -323,9 +313,7 @@ public class UnitBehaviour : MonoBehaviour //UnitBehavior is the core class that
 
             if (orderQueue.Count == 0) // if there are now no orders
             {
-                hasTarget = false;
-                currentTarget = null;
-                queueIsEmpty = true;
+                          queueIsEmpty = true;
                 currentOrderTypeNumber = 0;
                 attackMoveEnabled = true;
                 action.Stop();

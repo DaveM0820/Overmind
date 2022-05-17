@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Jobs;
 using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Collections;
 using Unity.Burst;
 using System.Diagnostics;
+using UnityEngine.ParticleSystemJobs;
 //using Unity.Entities;
-//using Unity.Transforms;
 //using Unity.Rendering;
 public class JobManager : MonoBehaviour
 {
@@ -83,6 +84,7 @@ public class JobManager : MonoBehaviour
     int totalTurrets = 0;
     GameObject[] unit_moveTurret = new GameObject[400];
     Transform[] turretsToMove_moveTurret = new Transform[400];
+
     Transform[] gunToMove_moveTurret = new Transform[400];
     Transform[] target_moveTurret = new Transform[400];
     float3[] gunForward_moveTurret = new float3[400];
@@ -131,14 +133,47 @@ public class JobManager : MonoBehaviour
     float updateTimestep;
     float halfTimestep;
 
-   // EntityManager entityManager;
+
+
+    //   JobHandle createParticlesJobHAndle = new JobHandle();
+    JobHandle createProjectilesJobHandle;
+
+    Projectile[] projectiles_createProjectile = new Projectile[200];
+    ParticleSystem[] shots_createProjectile = new ParticleSystem[200];
+    ParticleSystem[] hits_createProjectile = new ParticleSystem[200];
+    UnitBehaviour[] targets_createProjectile = new UnitBehaviour[200];
+    int projectilesToCreate = 0;
+    int nextProjectileHitTime = 0;
+    List<ProjectileHit> projectileHitList = new List<ProjectileHit>();
+    // NativeArray<ParticleSystem.Particle> particleArray_createParticles = new NativeArray<ParticleSystem.Particle>(5000, Allocator.Persistent);
+
+    // EntityManager entityManager;
     void Awake() {
         gameInformation = gameObject.GetComponent<GlobalGameInformation>();
         numberOfPlayers = gameInformation.numberOfPlayers;
         updateTimestep = gameInformation.updateTimestep;
         halfTimestep = updateTimestep / 2;
-      //  entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
-       // Entity entity = entityManager.CreateEntity();
+        //  entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
+        // Entity entity = entityManager.CreateEntity();
+
+
+
+
+
+    }
+    public void newProjectile(ParticleSystem shot, ParticleSystem hit, Vector3 startLocation, Vector3 endLocation, UnitBehaviour target = null, int aoe = 0, int damage = 0, float speed = 150, bool directionalHit = false) {
+        projectiles_createProjectile[projectilesToCreate] = new Projectile {
+            startLocation = startLocation,
+            endLocation = endLocation,
+            damage = damage,
+            aoe = aoe,
+            speed = speed,
+            directionalHit = directionalHit
+        };
+        shots_createProjectile[projectilesToCreate] = shot;
+        hits_createProjectile[projectilesToCreate] = hit;
+        targets_createProjectile[projectilesToCreate] = target;
+        projectilesToCreate++;
     }
     public void LookForTarget(Unit unit, int range) {
 
@@ -195,12 +230,13 @@ public class JobManager : MonoBehaviour
             shouldMove_moveTurret[index] = true;
 
         }
+        // UnityEngine.Debug.Log("moveturret " + totalTurrets);
 
         if (target != target_moveTurret[index])
         {
             target_moveTurret[index] = target;
         }
-        //  UnityEngine.Debug.Log("should move turret of index" + index + " total turrets to move " + turretsToMove);
+        //    UnityEngine.Debug.Log("should move turret of index" + index + " total turrets to move " + turretsToMove);
 
     }
     public void StopMovingTurret(int index) {
@@ -258,36 +294,42 @@ public class JobManager : MonoBehaviour
         }
         if (elapsed == 0)
         {
-            if (turretsToMove > 0)
+            if (numberOfUnitsToLookForTarget > 0)
             {
                 performanceTimer.Restart();
-                MoveTurrets();
-               //   UnityEngine.Debug.Log("PerformanceTimer, MoveTurrets  " + performanceTimer.Elapsed.TotalMilliseconds);
+                int lookfortargetnum = numberOfUnitsToLookForTarget;
+                LookForTargets();
+                if (performanceTimer.Elapsed.TotalMilliseconds > 0.2f)
+                {
 
+                    //  UnityEngine.Debug.Log("PerformanceTimer, LookForTargets  " + performanceTimer.Elapsed.TotalMilliseconds + " how many? " + lookfortargetnum);
+                }
             }
-        }
-        elapsed += Time.deltaTime;
+            elapsed++;
 
-        if (elapsed >= updateTimestep) //run the order every updateTimestep using the UpdateUnit method
+        }
+
+        if (elapsed == 1) //run the order every updateTimestep using the UpdateUnit method
         {
-         
+
             if (vehiclesToMove > 0)
             {
                 performanceTimer.Restart();
 
                 MoveVehicles();
-              //  UnityEngine.Debug.Log("PerformanceTimer, MoveVehicles  " + performanceTimer.Elapsed.TotalMilliseconds);
+                if (performanceTimer.Elapsed.TotalMilliseconds > 0.2f)
+                {
+
+                    //     UnityEngine.Debug.Log("PerformanceTimer, MoveVehicles  " + performanceTimer.Elapsed.TotalMilliseconds + " how many? " + vehiclesToMove);
+                }
 
             }
-
-            if (numberOfUnitsToLookForTarget > 0)
+            if (projectilesToCreate > 0)
             {
-                performanceTimer.Restart();
-
-                LookForTargets();
-               // UnityEngine.Debug.Log("PerformanceTimer, LookForTargets  " + performanceTimer.Elapsed.TotalMilliseconds);
+                CreateProjectiles();
 
             }
+
             //   UnityEngine.Debug.Log("PerformanceTimer, LookForTargets:  " + performanceTimer.Elapsed.TotalMilliseconds);
 
             if (transformsToMove > 0)
@@ -295,13 +337,32 @@ public class JobManager : MonoBehaviour
                 performanceTimer.Restart();
 
                 MoveTransforms();
-              // UnityEngine.Debug.Log("PerformanceTimer, MoveTransforms  " + performanceTimer.Elapsed.TotalMilliseconds);
+                if (performanceTimer.Elapsed.TotalMilliseconds > 0.2f)
+                {
 
+                    //   UnityEngine.Debug.Log("PerformanceTimer, MoveTransforms  " + performanceTimer.Elapsed.TotalMilliseconds + " how many? " + transformsToMove);
+                }
             }
 
+            elapsed += 1;
+
+        }
+        if (elapsed == 2)
+        {
+
+            if (turretsToMove > 0)
+            {
+
+                performanceTimer.Restart();
+                MoveTurrets();
+                if (performanceTimer.Elapsed.TotalMilliseconds > 0.2f)
+                {
+
+                    //  UnityEngine.Debug.Log("PerformanceTimer, MoveTurrets  " + performanceTimer.Elapsed.TotalMilliseconds + " how many? " + turretsToMove);
+                }
+            }
             elapsed = 0;
         }
-
 
         // JobHandle.CompleteAll(jobList);
         //
@@ -331,7 +392,7 @@ public class JobManager : MonoBehaviour
             {
                 foreach (Unit unitToCheck in gameInformation.unitList[currentfaction])
                 {
-                    targets[totalNumberOfTargets] = new Vector2 (unitToCheck.gameObject.transform.position.x, unitToCheck.gameObject.transform.position.z);
+                    targets[totalNumberOfTargets] = new Vector2(unitToCheck.gameObject.transform.position.x, unitToCheck.gameObject.transform.position.z);
                     military[totalNumberOfTargets] = unitToCheck.military;
                     target[totalNumberOfTargets] = unitToCheck;
                     totalNumberOfTargets++;
@@ -361,7 +422,70 @@ public class JobManager : MonoBehaviour
 
         //moveturrets
 
+    }
+    void ProjectileHit(ProjectileHit projectileHit) {
+        projectileHit.animation.Play();
+        if (projectileHit.aoe == 0)
+        {
+            if (projectileHit.target != null)
+            {
+            projectileHit.target.changeHP(-projectileHit.damage);
+            }
+        }
+        else
+        {
+        //schedule spherecast
+        }
+        projectileHitList.Remove(projectileHit);
+       // projectileHitList.RemoveAll(ProjectileHit => ProjectileHit.Contains(projectileHit));
 
+    }
+    void CreateProjectiles() {
+        foreach (ProjectileHit projectileHit in projectileHitList.ToArray())
+        {
+            if (Time.time > projectileHit.time)
+            {
+                ProjectileHit(projectileHit);
+            }
+        
+        }
+
+
+
+        NativeArray<Projectile> projectiles_projectilesToCreate_Native = new NativeArray<Projectile>(projectilesToCreate, Allocator.TempJob);
+        TransformAccessArray projectileTransforms_projectilesToCreate_Native = new TransformAccessArray(projectilesToCreate * 2);
+        NativeArray<float> distances_projectilesToCreate_Native = new NativeArray<float>(projectilesToCreate, Allocator.TempJob);
+        NativeArray<float> time_projectilesToCreate_Native = new NativeArray<float>(projectilesToCreate, Allocator.TempJob);
+
+        for (int i = 0; i < projectilesToCreate; i++)
+        {
+
+            projectiles_projectilesToCreate_Native[i] = projectiles_createProjectile[i];
+            projectileTransforms_projectilesToCreate_Native.Add(shots_createProjectile[i].gameObject.transform);
+            projectileTransforms_projectilesToCreate_Native.Add(hits_createProjectile[i].gameObject.transform);
+        }
+
+        CreateProjectile createProjectile = new CreateProjectile() {
+            projectile = projectiles_projectilesToCreate_Native,
+            distance = distances_projectilesToCreate_Native,
+            time = time_projectilesToCreate_Native,
+        };
+        createProjectilesJobHandle = createProjectile.Schedule(projectileTransforms_projectilesToCreate_Native);
+        createProjectilesJobHandle.Complete();
+
+        for (int i = 0; i < projectilesToCreate; i++)
+        {
+            var main = shots_createProjectile[i].main;
+            main.startLifetime = createProjectile.time[i];
+            shots_createProjectile[i].Play();
+
+            projectileHitList.Add(new ProjectileHit { time = createProjectile.time[i] + Time.time, animation = hits_createProjectile[i], aoe = projectiles_createProjectile[i].aoe, damage = projectiles_createProjectile[i].damage, target = targets_createProjectile[i] });
+        }
+        projectilesToCreate = 0;
+        time_projectilesToCreate_Native.Dispose();
+        distances_projectilesToCreate_Native.Dispose();
+        projectiles_projectilesToCreate_Native.Dispose();
+        projectileTransforms_projectilesToCreate_Native.Dispose();
     }
 
     void MoveTurrets() {
@@ -385,10 +509,10 @@ public class JobManager : MonoBehaviour
         {
             if (shouldMove_moveTurret[i])
             {
-                if (unit_moveTurret[i].activeSelf)
+                if (unit_moveTurret[i] != null)
                 {
 
-                    if (target_moveTurret[i].gameObject.activeSelf)
+                    if (target_moveTurret[i] != null)
                     {
                         turretPosition_moveTurret_Native[turretsToMoveCounter] = turretsToMove_moveTurret[i].position;
                         targetPosition_moveTurret_Native[turretsToMoveCounter] = target_moveTurret[i].position;
@@ -437,16 +561,13 @@ public class JobManager : MonoBehaviour
         {
             if (shouldMove_moveTurret[i])
             {
-               // UnityEngine.Debug.Log(i + "out of job turret rotation before " + turretsToMove_moveTurret[i].rotation);
 
                 turretsToMove_moveTurret[i].rotation = moveTurrets.turretRotation[turretsToMoveCounter];
                 gunToMove_moveTurret[i].rotation = moveTurrets.gunRotation[turretsToMoveCounter];
-              //  UnityEngine.Debug.Log(i + "out of job turret rotation after " + turretsToMove_moveTurret[i].rotation);
 
                 if (moveTurrets.canfire[turretsToMoveCounter])
                 {
                     unit_moveTurret[i].GetComponent<UnitBehaviour>().canFire = true;
-                 //   UnityEngine.Debug.Log("can fire!");
                 }
                 turretsToMoveCounter++;
                 if (turretsToMoveCounter > turretsToMove)
@@ -659,126 +780,125 @@ public class JobManager : MonoBehaviour
     }
 
     void LookForTargets() {
-  
-    
-            NativeArray<int> faction_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<bool> isMilitary_LookforTarget_Native = new NativeArray<bool>(totalNumberOfTargets, Allocator.TempJob);
-            NativeArray<float2> unitPosition_LookforTarget_Native = new NativeArray<float2>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<float2> targetPositions_LookforTarget_Native = new NativeArray<float2>(totalNumberOfTargets, Allocator.TempJob);
-            NativeArray<int> factionTargetCount_LookforTarget_Native = new NativeArray<int>(numberOfPlayers, Allocator.TempJob);
-            NativeArray<int> closestMilitaryTarget_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<int> closestNonMilitaryTarget_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<int> range_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<float> currentDistance_LookforTarget_Native = new NativeArray<float>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<float> minDistance_LookforTarget_Native = new NativeArray<float>(numberOfUnitsToLookForTarget, Allocator.TempJob);
-            NativeArray<int> stopCounting_LookforTarget_Native = new NativeArray<int>(numberOfPlayers, Allocator.TempJob);
-            NativeArray<int> startCountingAgain_LookforTarget_Native = new NativeArray<int>(numberOfPlayers, Allocator.TempJob);
 
-            for (int i = 0; i < numberOfUnitsToLookForTarget; i++)
-            {
 
-                faction_LookforTarget_Native[i] = unitsToLookForTarget[i].faction;
+        NativeArray<int> faction_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+        NativeArray<bool> isMilitary_LookforTarget_Native = new NativeArray<bool>(totalNumberOfTargets, Allocator.TempJob);
+        NativeArray<float2> unitPosition_LookforTarget_Native = new NativeArray<float2>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+        NativeArray<float2> targetPositions_LookforTarget_Native = new NativeArray<float2>(totalNumberOfTargets, Allocator.TempJob);
+        NativeArray<int> factionTargetCount_LookforTarget_Native = new NativeArray<int>(numberOfPlayers, Allocator.TempJob);
+        NativeArray<int> closestMilitaryTarget_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+        NativeArray<int> closestNonMilitaryTarget_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+        NativeArray<int> range_LookforTarget_Native = new NativeArray<int>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+        NativeArray<float> currentDistance_LookforTarget_Native = new NativeArray<float>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+        NativeArray<float> minDistance_LookforTarget_Native = new NativeArray<float>(numberOfUnitsToLookForTarget, Allocator.TempJob);
+        NativeArray<int> stopCounting_LookforTarget_Native = new NativeArray<int>(numberOfPlayers, Allocator.TempJob);
+        NativeArray<int> startCountingAgain_LookforTarget_Native = new NativeArray<int>(numberOfPlayers, Allocator.TempJob);
 
-                currentDistance_LookforTarget_Native[i] = 10000;
+        for (int i = 0; i < numberOfUnitsToLookForTarget; i++)
+        {
 
-                minDistance_LookforTarget_Native[i] = 10000;
+            faction_LookforTarget_Native[i] = unitsToLookForTarget[i].faction;
 
-                range_LookforTarget_Native[i] = unitRange[i];
+            currentDistance_LookforTarget_Native[i] = 10000;
 
-           
+            minDistance_LookforTarget_Native[i] = 10000;
 
-                    unitPosition_LookforTarget_Native[i] = new Vector2(unitsToLookForTarget[i].gameObject.transform.position.x, unitsToLookForTarget[i].gameObject.transform.position.z);
+            range_LookforTarget_Native[i] = unitRange[i];
 
-         //   UnityEngine.Debug.Log( unitsToLookForTarget[i].gameObject.name + " looking");
+
+
+            unitPosition_LookforTarget_Native[i] = new Vector2(unitsToLookForTarget[i].gameObject.transform.position.x, unitsToLookForTarget[i].gameObject.transform.position.z);
+
+            //   UnityEngine.Debug.Log( unitsToLookForTarget[i].gameObject.name + " looking");
 
             //  Debug.Log("faction " + faction[i] + " postition " + unitposition[i]);
         }
 
 
         for (int i = 0; i < totalNumberOfTargets; i++)
+        {
+
+            targetPositions_LookforTarget_Native[i] = targets[i];
+
+            isMilitary_LookforTarget_Native[i] = military[i];
+
+        }
+
+
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+
+            factionTargetCount_LookforTarget_Native[i] = numberOfTargetsPerFaction[i];
+
+            stopCounting_LookforTarget_Native[i] = stopCounting_notinjob[i];
+
+            startCountingAgain_LookforTarget_Native[i] = startCountingAgain_notinjob[i];
+
+
+        }
+
+
+        lookForTarget = new LookForTarget {
+            faction = faction_LookforTarget_Native,
+            unitposition = unitPosition_LookforTarget_Native,
+            targetpositions = targetPositions_LookforTarget_Native,
+            factionTargetCount = factionTargetCount_LookforTarget_Native,
+            closestMilitaryTarget = closestMilitaryTarget_LookforTarget_Native,
+            closestNonMilitaryTarget = closestNonMilitaryTarget_LookforTarget_Native,
+            isMilitary = isMilitary_LookforTarget_Native,
+            currentDistance = currentDistance_LookforTarget_Native,
+            minDistance = minDistance_LookforTarget_Native,
+            stopCounting = stopCounting_LookforTarget_Native,
+            startCountingAgain = startCountingAgain_LookforTarget_Native,
+            range = range_LookforTarget_Native
+        };
+
+
+
+        lookForTargetJobHandle = lookForTarget.Schedule(numberOfUnitsToLookForTarget, 2);
+        lookForTargetJobHandle.Complete();
+
+
+        for (int i = 0; i < numberOfUnitsToLookForTarget - 1; i++)
+        {
+
+            if (closestMilitaryTarget_LookforTarget_Native[i] != 1000 && unitsToLookForTarget[i].gameObject != null)
             {
 
-                targetPositions_LookforTarget_Native[i] = targets[i];
+                //  unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().Attack(currentTarget);
 
-                isMilitary_LookforTarget_Native[i] = military[i];
+                unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().Attack(target[lookForTarget.closestMilitaryTarget[i]].gameObject);
+                // Debug.Log("FINAL ASSIGNMENT unit " + unitsToLookForTarget[i].gameObject.name + " is targeting " + target[lookForTarget.closestMilitaryTarget[i]].gameObject);
+
+
+                // Debug.Log("FINAL ASSIGNMENT unit " + unitsToLookForTarget[i].gameObject.name + " is targeting " + target[lookForTarget.closestMilitaryTarget[i]].gameObject);
+
 
             }
-
-
-            for (int i = 0; i < numberOfPlayers; i++)
+            else
             {
-
-                factionTargetCount_LookforTarget_Native[i] = numberOfTargetsPerFaction[i];
-
-                stopCounting_LookforTarget_Native[i] = stopCounting_notinjob[i];
-
-                startCountingAgain_LookforTarget_Native[i] = startCountingAgain_notinjob[i];
-
-
+                 unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().TargetGone();
             }
+            //   Debug.Log(unitsToLookForTarget[i].gameObject.name + " found target with unit number " + lookForTarget.closestTarget[i]);
+        }
 
 
-            lookForTarget = new LookForTarget {
-                faction = faction_LookforTarget_Native,
-                unitposition = unitPosition_LookforTarget_Native,
-                targetpositions = targetPositions_LookforTarget_Native,
-                factionTargetCount = factionTargetCount_LookforTarget_Native,
-                closestMilitaryTarget = closestMilitaryTarget_LookforTarget_Native,
-                closestNonMilitaryTarget = closestNonMilitaryTarget_LookforTarget_Native,
-                isMilitary = isMilitary_LookforTarget_Native,
-                currentDistance = currentDistance_LookforTarget_Native,
-                minDistance = minDistance_LookforTarget_Native,
-                stopCounting = stopCounting_LookforTarget_Native,
-                startCountingAgain = startCountingAgain_LookforTarget_Native,
-                range = range_LookforTarget_Native
-            };
+        numberOfUnitsToLookForTarget = 0;
+        faction_LookforTarget_Native.Dispose();
+        unitPosition_LookforTarget_Native.Dispose();
+        targetPositions_LookforTarget_Native.Dispose();
+        factionTargetCount_LookforTarget_Native.Dispose();
+        closestMilitaryTarget_LookforTarget_Native.Dispose();
+        closestNonMilitaryTarget_LookforTarget_Native.Dispose();
+        isMilitary_LookforTarget_Native.Dispose();
+        currentDistance_LookforTarget_Native.Dispose();
+        minDistance_LookforTarget_Native.Dispose();
+        stopCounting_LookforTarget_Native.Dispose();
+        startCountingAgain_LookforTarget_Native.Dispose();
+        range_LookforTarget_Native.Dispose();
 
 
-
-            lookForTargetJobHandle = lookForTarget.Schedule(numberOfUnitsToLookForTarget, 1);
-            lookForTargetJobHandle.Complete();
-
-
-            for (int i = 0; i < numberOfUnitsToLookForTarget - 1; i++)
-            {
-
-                if (closestMilitaryTarget_LookforTarget_Native[i] != 1000)
-                {
-
-
-                    //  unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().Attack(currentTarget);
-               
-                        unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().Attack(target[lookForTarget.closestMilitaryTarget[i]].gameObject);
-                        // Debug.Log("FINAL ASSIGNMENT unit " + unitsToLookForTarget[i].gameObject.name + " is targeting " + target[lookForTarget.closestMilitaryTarget[i]].gameObject);
-                    
-
-                    // Debug.Log("FINAL ASSIGNMENT unit " + unitsToLookForTarget[i].gameObject.name + " is targeting " + target[lookForTarget.closestMilitaryTarget[i]].gameObject);
-
-
-                }
-                else
-                {
-                   // unitsToLookForTarget[i].gameObject.GetComponent<UnitBehaviour>().TargetGone();
-                }
-                //   Debug.Log(unitsToLookForTarget[i].gameObject.name + " found target with unit number " + lookForTarget.closestTarget[i]);
-            }
-
-
-            numberOfUnitsToLookForTarget = 0;
-            faction_LookforTarget_Native.Dispose();
-            unitPosition_LookforTarget_Native.Dispose();
-            targetPositions_LookforTarget_Native.Dispose();
-            factionTargetCount_LookforTarget_Native.Dispose();
-            closestMilitaryTarget_LookforTarget_Native.Dispose();
-            closestNonMilitaryTarget_LookforTarget_Native.Dispose();
-            isMilitary_LookforTarget_Native.Dispose();
-            currentDistance_LookforTarget_Native.Dispose();
-            minDistance_LookforTarget_Native.Dispose();
-            stopCounting_LookforTarget_Native.Dispose();
-            startCountingAgain_LookforTarget_Native.Dispose();
-            range_LookforTarget_Native.Dispose();
-
-        
     }
 
 
@@ -824,7 +944,7 @@ public struct MoveTransforms : IJobParallelFor
 }
 [BurstCompile]
 
-public struct MoveTurrets : IJobParallelFor
+public struct MoveTurrets : IJobParallelForBurstSchedulable
 {
     [ReadOnly]
     public NativeArray<float3> unitposition;
@@ -835,7 +955,7 @@ public struct MoveTurrets : IJobParallelFor
     [ReadOnly]
 
     public NativeArray<float> deltaTime;
-   
+
 
     public NativeArray<float> rotationspeed;
     public NativeArray<bool> canfire;
@@ -858,7 +978,7 @@ public struct MoveTurrets : IJobParallelFor
 
         if (checkDistance[0])
         {
-            if (math.distance(turretForward, direction) < 0.1f)
+            if (math.distance(turretForward, direction) < 0.2f)
             {
                 canfire[index] = true;
 
@@ -872,7 +992,7 @@ public struct MoveTurrets : IJobParallelFor
 
     }
 }
-//[BurstCompile]
+[BurstCompile]
 
 public struct MoveVehicles : IJobParallelFor
 {
@@ -897,8 +1017,8 @@ public struct MoveVehicles : IJobParallelFor
 
         float3 direction = math.normalize(targetposition[index] - unitposition[index]);
         float3 forward = math.forward(unitforward[index]);
-        unitforward[index] = math.slerp(unitforward[index],quaternion.LookRotation(direction,new float3(0,1,0)), unitTurnSpeed[index]);
-   
+        unitforward[index] = math.slerp(unitforward[index], quaternion.LookRotation(direction, new float3(0, 1, 0)), unitTurnSpeed[index]);
+
 
         float distanceToTarget = math.distance(unitposition[index], targetposition[index]);
         if (distanceToTarget < 5)// if the vehicle is facing the target
@@ -923,7 +1043,9 @@ public struct MoveVehicles : IJobParallelFor
         {
 
             unitposition[index] += unitVelocity[index] * forward;
-        } else if(directionDistance > 1.5f) {
+        }
+        else if (directionDistance > 1.5f)
+        {
             unitposition[index] -= unitVelocity[index] * forward;
 
         }
@@ -933,6 +1055,54 @@ public struct MoveVehicles : IJobParallelFor
         }
     }
 
+}
+[BurstCompile]
+
+public struct CreateProjectile : IJobParallelForTransform
+{
+    [ReadOnly]
+    public NativeArray<Projectile> projectile;
+    [NativeDisableParallelForRestriction]
+    public NativeArray<float> distance;
+    [NativeDisableParallelForRestriction]
+
+    public NativeArray<float> time;
+
+
+    public void Execute(int i, TransformAccess transformAccessArray) {
+
+            if (i % 2 == 0)
+            {
+            //     UnityEngine.Debug.Log("transform shot " + i + " position " + transformAccessArray.position);
+            // UnityEngine.Debug.Log("transform shot " + i + " rotation " + transformAccessArray.rotation);
+            int index = i / 2;
+
+            //transformAccessArray.position = projectile[i / 2].startLocation;
+     
+            float3 direction = projectile[index].endLocation - projectile[index].startLocation;
+            transformAccessArray.rotation = Quaternion.LookRotation(direction);
+                float distance = math.distance(projectile[index].startLocation, projectile[index].endLocation);
+                time[index] = (distance / projectile[index].speed);
+            //    UnityEngine.Debug.Log("transform shot " + i + " rotation 2 " + transformAccessArray.rotation);
+
+            }
+            else
+            {
+            //  UnityEngine.Debug.Log("transform hit " + i + " position " + transformAccessArray.position);
+            int index = (i - 1) / 2;
+
+            transformAccessArray.position = projectile[index].endLocation;
+              //  UnityEngine.Debug.Log("transform hit " + i + " position 2 " + transformAccessArray.position);
+            if (projectile[index].directionalHit)
+            {
+                float3 direction = projectile[index].endLocation - projectile[index].startLocation;
+                transformAccessArray.rotation = quaternion.LookRotation(-direction, new Vector3(0, 1, 0));
+            }
+
+            }
+        
+
+    }
 }
 [BurstCompile]
 
@@ -986,18 +1156,38 @@ public struct LookForTarget : IJobParallelFor
                 }
             }
         }
-        if (minDistance[index] > range[index])
-        {
-            if (math.distance(unitposition[index], targetpositions[closestNonMilitaryTarget[index]]) < range[index])
-            {
-                closestMilitaryTarget[index] = closestNonMilitaryTarget[index];
-            }
-            else
-            {
-                closestMilitaryTarget[index] = 1000;
-            }
-        }
+        /* if (minDistance[index] > range[index])
+         {
+             if (math.distance(unitposition[index], targetpositions[closestNonMilitaryTarget[index]]) < range[index])
+             {
+                 closestMilitaryTarget[index] = closestNonMilitaryTarget[index];
+             }
+             else
+             {
+                 closestMilitaryTarget[index] = 1000;
+             }
+         }*/
+        closestMilitaryTarget[index] = 1000;
         // Debug.Log("look for target12");
 
     }
 }
+public struct Projectile
+{
+    public Vector3 startLocation;
+    public Vector3 endLocation;
+    public int aoe;
+    public int damage;
+    public float time;
+    public float speed;
+    public bool directionalHit;
+}
+public struct ProjectileHit
+{
+    public float time;
+    public ParticleSystem animation;
+    public int aoe;
+    public int damage;
+    public UnitBehaviour target;
+}
+

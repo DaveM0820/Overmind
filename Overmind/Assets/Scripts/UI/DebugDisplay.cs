@@ -18,10 +18,9 @@ public class DebugDisplay : MonoBehaviour
         Application.logMessageReceived -= HandleLog;
     }
 
-    void HandleLog(string logString, string stackTrace, LogType type)
-    {
-        if (type == LogType.Log)
-        {
+    void HandleLog(string logString, string stackTrace, LogType type) {
+     //   if (type == LogType.Log || type == LogType.Error )
+       // {
             string[] splitString = logString.Split(char.Parse(":"));
             string debugKey = splitString[0];
             string debugValue = splitString.Length > 1 ? splitString[1] : "";
@@ -30,7 +29,7 @@ public class DebugDisplay : MonoBehaviour
             else
                 debugLogs.Add(debugKey, debugValue);
            
-        }
+       // }
 
         string displayText = "";
         int count = 0;
